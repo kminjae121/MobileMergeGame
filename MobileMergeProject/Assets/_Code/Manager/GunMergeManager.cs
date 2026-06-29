@@ -8,7 +8,7 @@ namespace _Code.Manager
     public class GunMergeManager : MonoSingleton<GunMergeManager>
     {
         [SerializeField] private List<GunDataSO> gunDatas;
-
+        
         private readonly Dictionary<GunType, GunDataSO> gunDataDict = new();
 
         protected override void Awake()

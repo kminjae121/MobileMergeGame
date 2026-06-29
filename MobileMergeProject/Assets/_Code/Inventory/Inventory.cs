@@ -24,13 +24,12 @@ namespace Code.Inventories
             guns.Add(gunData);
         }
 
-        public void Remove(GunDataSO gunData)
+        public void RemoveGun(GunDataSO gunData)
         {
             if (gunData == null)
                 return;
 
             string gunName = gunData.GunName;
-
             if (!gunDatas.TryGetValue(gunName, out List<GunDataSO> guns))
                 return;
 

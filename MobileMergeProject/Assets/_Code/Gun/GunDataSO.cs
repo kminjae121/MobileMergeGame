@@ -15,7 +15,7 @@ namespace _Code.GunData
     [CreateAssetMenu(menuName = "GunData", fileName = "GunDataSO")]
     public class GunDataSO : ScriptableObject
     {
-        public GameObject GunItemPrefab;
+        public GunItem GunItemPrefab;
         public GameObject GunPrefab;
         public GunType GunType;
         public string GunName;

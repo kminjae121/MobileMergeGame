@@ -11,6 +11,7 @@ namespace _Code.InputSystem
 
         public Vector2 TorchValue;
         public Action TorchPressEvent;
+        public Action TorchReleaseEvent;
 
         private void EnsureControls()
         {
@@ -43,6 +44,8 @@ namespace _Code.InputSystem
         {
             if(context.performed)
                 TorchPressEvent?.Invoke();
+            else if(context.canceled)
+                TorchReleaseEvent?.Invoke();
         }
     }
 }
