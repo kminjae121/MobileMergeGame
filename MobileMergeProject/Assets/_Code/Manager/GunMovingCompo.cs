@@ -11,6 +11,8 @@ namespace _Code.Manager
 
         private GunItem _currentGunItem;
 
+        private bool _isHolding;
+
         private void Awake()
         {
             inputSO.TorchPressEvent += HandleTorchPress;
@@ -24,13 +26,23 @@ namespace _Code.Manager
             inputSO.TorchReleaseEvent -= HandleTorchRelease;
         }
 
+        private void Update()
+        {
+            if (_isHolding && _currentGunItem != null)
+                _currentGunItem.transform.position = inputSO.TorchValue;
+        }
+
         private void HandleTorchPress()
         {
-            
+            GunItem gunItem;
+
+            gunItem = _currentGunItem;
+
+            _isHolding = true;
         }
         private void HandleTorchRelease()
         {
-            
+            _currentGunItem = null;
         }
     }
 }
