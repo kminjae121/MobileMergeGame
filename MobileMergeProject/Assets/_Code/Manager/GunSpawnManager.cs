@@ -1,6 +1,8 @@
+using System;
 using Unity.XR.OpenVR;
 using UnityEngine;
 using PlayerInputSO = _Code.InputSystem.PlayerInput;
+using Random = UnityEngine.Random;
 
 namespace _Code.Manager
 {
@@ -13,6 +15,7 @@ namespace _Code.Manager
         [SerializeField] private GameObject[] spawnPrefabs;
 
         [SerializeField] private Camera mainCamera;
+        [SerializeField] private GameObject spawningObj;
 
         [Tooltip("2D 오브젝트가 생성될 Z 위치")]
         [SerializeField] private float spawnZ = 0f;
@@ -31,23 +34,38 @@ namespace _Code.Manager
                 return;
             }
 
-            playerInput.TorchPressEvent += HandleTorchPress;
+            playerInput.TorchReleaseEvent += HandleTorchPress;
         }
 
         private void OnDisable()
         {
             if (playerInput != null)
-                playerInput.TorchPressEvent -= HandleTorchPress;
+                playerInput.TorchReleaseEvent -= HandleTorchPress;
+        }
+
+        private void Update()
+        {
+            if (GameManager.Instance.PlayMode == PlayMode.Moving)
+                return;
+            
+            Vector3 worldPosition = mainCamera.ScreenToWorldPoint(new Vector3(playerInput.TorchValue.x,0, 0));
+
+            worldPosition.y = 5;
+            worldPosition.z = 0;
+
+            spawningObj.transform.position = worldPosition;
         }
 
         private void HandleTorchPress()
         {
-            Vector2 screenPosition = playerInput.TorchValue;
-            SpawnRandomObject(screenPosition);
+            SpawnRandomObject();
         }
 
-        private void SpawnRandomObject(Vector2 screenPosition)
+        private void SpawnRandomObject()
         {
+            if (GameManager.Instance.PlayMode == PlayMode.Moving)
+                return;
+            
             if (spawnPrefabs == null || spawnPrefabs.Length == 0)
             {
                 Debug.LogWarning("생성할 프리팹이 없습니다. Spawn Prefabs 배열에 프리팹을 넣어주세요.");
@@ -70,20 +88,8 @@ namespace _Code.Manager
                 Debug.LogWarning("Spawn Prefabs 배열 안에 비어있는 프리팹이 있습니다.");
                 return;
             }
-
-            float distanceFromCamera = spawnZ - mainCamera.transform.position.z;
-
-            Vector3 worldPosition = mainCamera.ScreenToWorldPoint(
-                new Vector3(
-                    screenPosition.x,
-                    screenPosition.y,
-                    distanceFromCamera
-                )
-            );
-
-            worldPosition.z = spawnZ;
-
-            Instantiate(randomPrefab, worldPosition, Quaternion.identity);
+            
+            Instantiate(randomPrefab, spawningObj.transform.position, Quaternion.identity);
         }
     }
 }

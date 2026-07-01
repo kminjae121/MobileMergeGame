@@ -7,8 +7,8 @@ namespace _Code.Manager
     public class GunMovingCompo : MonoBehaviour
     {
         [SerializeField] private PlayerInput inputSO;
-        [SerializeField] private LayerMask _whatIsGun;
-        [SerializeField] private Camera _mainCamera;
+        [SerializeField] private LayerMask whatIsGun;
+        [SerializeField] private Camera mainCamera;
 
         private Rigidbody2D _crnGunRbCompo;
         private GunItem _currentGunItem;
@@ -16,8 +16,8 @@ namespace _Code.Manager
 
         private void Awake()
         {
-            if (_mainCamera == null)
-                _mainCamera = Camera.main;
+            if (mainCamera == null)
+                mainCamera = Camera.main;
 
             inputSO.TorchPressEvent += HandleTorchPress;
             inputSO.TorchReleaseEvent += HandleTorchRelease;
@@ -31,7 +31,7 @@ namespace _Code.Manager
 
         private void Update()
         {
-            if (_isHolding && _currentGunItem != null)
+            if (_isHolding && _currentGunItem != null && GameManager.Instance.PlayMode == PlayMode.Moving)
             {
                 _currentGunItem.transform.position = GetTouchWorldPosition();
             }
@@ -39,9 +39,13 @@ namespace _Code.Manager
 
         private void HandleTorchPress()
         {
+            if (GameManager.Instance.PlayMode == PlayMode.Spawning)
+                return;
+            
             Vector2 touchWorldPosition = GetTouchWorldPosition();
 
-            Collider2D hit = Physics2D.OverlapPoint(touchWorldPosition, _whatIsGun);
+            Collider2D hit = Physics2D.OverlapPoint(touchWorldPosition, whatIsGun);
+            
             
             if (hit == null)
             {
@@ -62,25 +66,29 @@ namespace _Code.Manager
 
             _crnGunRbCompo.gravityScale = 0;
             _crnGunRbCompo.linearVelocity = Vector2.zero;
+            Instantiate(_currentGunItem,touchWorldPosition,Quaternion.identity);
             _isHolding = true;
         }
 
         private void HandleTorchRelease()
         {
-            _isHolding = false;
-            _crnGunRbCompo.linearVelocity = Vector2.zero;
-            _crnGunRbCompo.gravityScale = 1;
-            _crnGunRbCompo = null;
-            _currentGunItem = null;
+            if (_crnGunRbCompo != null && _currentGunItem != null)
+            {
+                _isHolding = false;
+                _crnGunRbCompo.linearVelocity = Vector2.zero;
+                _crnGunRbCompo.gravityScale = 1;
+                _crnGunRbCompo = null;
+                _currentGunItem = null;   
+            }
         }
 
         private Vector2 GetTouchWorldPosition()
         {
             Vector3 screenPosition = inputSO.TorchValue;
 
-            screenPosition.z = -_mainCamera.transform.position.z;
+            screenPosition.z = -mainCamera.transform.position.z;
 
-            Vector3 worldPosition = _mainCamera.ScreenToWorldPoint(screenPosition);
+            Vector3 worldPosition = mainCamera.ScreenToWorldPoint(screenPosition);
 
             return worldPosition;
         }
