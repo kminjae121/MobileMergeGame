@@ -36,6 +36,7 @@ namespace _Code.GunData
             if (GetInstanceID() > otherGunItem.GetInstanceID())
                 return;
 
+            Debug.Log("Test");
             isMerging = true;
             otherGunItem.isMerging = true;
 
