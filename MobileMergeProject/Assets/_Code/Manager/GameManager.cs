@@ -1,3 +1,4 @@
+using _Code.GunData;
 using UnityEngine;
 
 namespace _Code.Manager
@@ -13,5 +14,7 @@ namespace _Code.Manager
         
         public void SetPlayMode(PlayMode playMode)
             => PlayMode = playMode;
+
+        public GunType GetMaxGunType => GunType.Launcher;
     }
 }
