@@ -16,6 +16,8 @@ namespace _Code.GunData
             isMerging = false;
         }
 
+        public GunType GetThisItemType() => gunData.GunType;
+
         private void OnCollisionEnter2D(Collision2D other)
         {
             if (isMerging)
