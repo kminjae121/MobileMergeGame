@@ -74,12 +74,7 @@ namespace _Code.Manager
 
             if (mainCamera == null)
                 mainCamera = Camera.main;
-
-            if (mainCamera == null)
-            {
-                Debug.LogError("Main Camera를 찾을 수 없습니다.");
-                return;
-            }
+            
 
             GameObject randomPrefab = spawnPrefabs[Random.Range(0, spawnPrefabs.Length)];
 
