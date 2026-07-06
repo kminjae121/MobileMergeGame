@@ -16,5 +16,5 @@ namespace _Code.Manager
             => PlayMode = playMode;
 
         public GunType GetMaxGunType => GunType.Launcher;
-    }
+    }   
 }
