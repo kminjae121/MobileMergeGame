@@ -50,7 +50,7 @@ namespace _Code.Manager
             
             Vector3 worldPosition = mainCamera.ScreenToWorldPoint(new Vector3(playerInput.TorchValue.x,0, 0));
 
-            worldPosition.y = 5;
+            worldPosition.y = -1.5f;
             worldPosition.z = 0;
 
             spawningObj.transform.position = worldPosition;
