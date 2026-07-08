@@ -11,6 +11,8 @@ namespace _Code.Manager
     public class GameManager : MonoSingleton<GameManager>
     {
         public PlayMode PlayMode { get; set; } = PlayMode.Spawning;
+
+        private string _name = string.Copy("Ay");
         
         public void SetPlayMode(PlayMode playMode)
             => PlayMode = playMode;
