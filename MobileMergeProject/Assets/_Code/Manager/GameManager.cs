@@ -12,7 +12,7 @@ namespace _Code.Manager
     {
         public PlayMode PlayMode { get; set; } = PlayMode.Spawning;
 
-        private string _name = string.Copy("Ay");
+        private string _name = "Wow";
         
         public void SetPlayMode(PlayMode playMode)
             => PlayMode = playMode;
