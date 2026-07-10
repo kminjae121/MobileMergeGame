@@ -13,6 +13,8 @@ namespace _Code.Manager
         public PlayMode PlayMode { get; set; } = PlayMode.Spawning;
 
         private string _name = "Wow";
+
+        private string _currentType = "Jasosou Sukki";
         
         public void SetPlayMode(PlayMode playMode)
             => PlayMode = playMode;
