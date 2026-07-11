@@ -1,3 +1,4 @@
+using System;
 using _Code.Manager;
 using UnityEngine;
 
@@ -14,6 +15,11 @@ namespace _Code.GunData
         private void OnEnable()
         {
             isMerging = false;
+        }
+
+        private void OnDestroy()
+        {
+            isMerging = true;
         }
 
         public GunType GetThisItemType() => gunData.GunType;
