@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using MouseView = _Code.Mouse.Mouse;
 
 namespace _Code.Editor
 {
@@ -37,6 +38,7 @@ namespace _Code.Editor
             }
 
             BlockField blockField = CreateBoard(root.transform, sprite);
+            MouseView mouse = CreateMouse(root.transform, sprite, blockField);
             BlockPiece[] pieces = CreatePieces(root.transform, sprite, mainCamera);
             TextMeshPro scoreText = CreateText(root.transform, "ScoreText", "Score 0", new Vector3(0f, 4.75f, 0f), 8f, 0.52f);
             TextMeshPro messageText = CreateText(root.transform, "MessageText", string.Empty, new Vector3(0f, 4.18f, 0f), 7f, 0.42f);
@@ -55,6 +57,7 @@ namespace _Code.Editor
             SerializedObject gameSerializedObject = new SerializedObject(gameManager);
             gameSerializedObject.FindProperty("_blockField").objectReferenceValue = blockField;
             gameSerializedObject.FindProperty("_randomBlockManager").objectReferenceValue = randomBlockManager;
+            gameSerializedObject.FindProperty("_mouse").objectReferenceValue = mouse;
             gameSerializedObject.FindProperty("_pieces").arraySize = pieces.Length;
             for (int i = 0; i < pieces.Length; i++)
                 gameSerializedObject.FindProperty("_pieces").GetArrayElementAtIndex(i).objectReferenceValue = pieces[i];
@@ -117,6 +120,22 @@ namespace _Code.Editor
 
             blockField.Rebuild();
             return blockField;
+        }
+
+        private static MouseView CreateMouse(Transform parent, Sprite sprite, BlockField blockField)
+        {
+            GameObject mouseObject = new GameObject("Mouse");
+            mouseObject.transform.SetParent(parent);
+            mouseObject.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
+
+            SpriteRenderer renderer = mouseObject.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.color = Color.black;
+            renderer.sortingOrder = 5;
+
+            MouseView mouse = mouseObject.AddComponent<MouseView>();
+            mouse.Initialize(blockField);
+            return mouse;
         }
 
         private static BlockPiece[] CreatePieces(Transform parent, Sprite sprite, Camera mainCamera)

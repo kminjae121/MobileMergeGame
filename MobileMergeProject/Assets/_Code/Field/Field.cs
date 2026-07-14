@@ -10,10 +10,14 @@ namespace _Code.Field
 
         private bool _isHaveObject;
         private GameObject _thisObject;
+        private Color _currentColor = Color.white;
+        private int _currentGroupId = -1;
 
         public bool IsHaveObject => _isHaveObject;
         public bool IsEmpty => !_isHaveObject;
         public GameObject CurrentObject => _thisObject;
+        public Color CurrentColor => _currentColor;
+        public int CurrentGroupId => _currentGroupId;
 
         private void Awake()
         {
@@ -28,8 +32,15 @@ namespace _Code.Field
 
         public void SetObject(GameObject obj, Color color)
         {
+            SetObject(obj, color, obj != null ? obj.GetInstanceID() : -1);
+        }
+
+        public void SetObject(GameObject obj, Color color, int groupId)
+        {
             _isHaveObject = true;
             _thisObject = obj;
+            _currentColor = color;
+            _currentGroupId = groupId;
 
             if (_objectRenderer == null)
                 return;
@@ -42,6 +53,8 @@ namespace _Code.Field
         {
             _isHaveObject = false;
             _thisObject = null;
+            _currentColor = Color.white;
+            _currentGroupId = -1;
 
             if (_objectRenderer != null)
                 _objectRenderer.enabled = false;

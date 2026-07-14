@@ -35,6 +35,7 @@ namespace _Code.Block
         public override Color BlockColor => _color;
         public bool IsPlaced => _isPlaced;
         public float CellSize => _cellSize;
+        public static bool IsAnyDragging => _activePiece != null;
 
         private void Awake()
         {
