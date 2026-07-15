@@ -275,25 +275,53 @@ namespace _Code.Field
 
         private List<BlockGroup> GetBlockGroups()
         {
-            Dictionary<int, BlockGroup> groups = new Dictionary<int, BlockGroup>();
+            List<BlockGroup> groups = new List<BlockGroup>();
+            HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
 
             foreach (Field field in _fields)
             {
-                if (field.IsEmpty)
+                if (field.IsEmpty || visited.Contains(field.Point))
                     continue;
 
-                int groupId = field.CurrentGroupId;
-
-                if (!groups.TryGetValue(groupId, out BlockGroup group))
-                {
-                    group = new BlockGroup(groupId);
-                    groups.Add(groupId, group);
-                }
-
-                group.Add(field);
+                groups.Add(BuildConnectedGroup(field, visited));
             }
 
-            return new List<BlockGroup>(groups.Values);
+            return groups;
+        }
+
+        private BlockGroup BuildConnectedGroup(Field startField, HashSet<Vector2Int> visited)
+        {
+            int groupId = startField.CurrentGroupId;
+            BlockGroup group = new BlockGroup(groupId);
+            Queue<Field> queue = new Queue<Field>();
+
+            visited.Add(startField.Point);
+            queue.Enqueue(startField);
+
+            while (queue.Count > 0)
+            {
+                Field field = queue.Dequeue();
+                group.Add(field);
+
+                TryEnqueueNeighbor(field.Point + Vector2Int.up, groupId, visited, queue);
+                TryEnqueueNeighbor(field.Point + Vector2Int.down, groupId, visited, queue);
+                TryEnqueueNeighbor(field.Point + Vector2Int.left, groupId, visited, queue);
+                TryEnqueueNeighbor(field.Point + Vector2Int.right, groupId, visited, queue);
+            }
+
+            return group;
+        }
+
+        private void TryEnqueueNeighbor(Vector2Int point, int groupId, HashSet<Vector2Int> visited, Queue<Field> queue)
+        {
+            if (visited.Contains(point))
+                return;
+
+            if (!TryGetField(point, out Field field) || field.IsEmpty || field.CurrentGroupId != groupId)
+                return;
+
+            visited.Add(point);
+            queue.Enqueue(field);
         }
 
         private bool CanMoveGroup(BlockGroup group, Vector2Int direction)
@@ -305,7 +333,7 @@ namespace _Code.Field
                 if (!TryGetField(targetPoint, out Field targetField))
                     return false;
 
-                if (!targetField.IsEmpty && targetField.CurrentGroupId != group.Id)
+                if (!targetField.IsEmpty && !group.Contains(targetPoint))
                     return false;
             }
 
@@ -395,6 +423,17 @@ namespace _Code.Field
                 MaxX = Mathf.Max(MaxX, field.Point.x);
                 MinY = Mathf.Min(MinY, field.Point.y);
                 MaxY = Mathf.Max(MaxY, field.Point.y);
+            }
+
+            public bool Contains(Vector2Int point)
+            {
+                foreach (BlockCellState cell in _cells)
+                {
+                    if (cell.Point == point)
+                        return true;
+                }
+
+                return false;
             }
         }
     }
