@@ -22,6 +22,7 @@ namespace _Code.Block
         private readonly List<Vector2Int> _cells = new List<Vector2Int>(9);
         private BoxCollider2D _touchCollider;
         private Color _color = Color.white;
+        private Sprite _catSprite;
         private Vector2 _visualCenter;
         private Vector3 _slotPosition;
         private Vector3 _dragOffset;
@@ -33,6 +34,7 @@ namespace _Code.Block
 
         public override IReadOnlyList<Vector2Int> Cells => _cells;
         public override Color BlockColor => _color;
+        public override Sprite BlockSprite => _catSprite != null ? _catSprite : BlockBlastSpriteLibrary.CatBlockSprite;
         public bool IsPlaced => _isPlaced;
         public float CellSize => _cellSize;
         public static bool IsAnyDragging => _activePiece != null;
@@ -84,6 +86,11 @@ namespace _Code.Block
 
         public void Configure(BlockShape shape, Color color)
         {
+            Configure(shape, color, BlockBlastSpriteLibrary.GetRandomCatBlockSprite());
+        }
+
+        public void Configure(BlockShape shape, Color color, Sprite catSprite)
+        {
             gameObject.SetActive(true);
 
             _cells.Clear();
@@ -92,6 +99,7 @@ namespace _Code.Block
 
             _visualCenter = shape.VisualCenter;
             _color = color;
+            _catSprite = catSprite != null ? catSprite : BlockBlastSpriteLibrary.CatBlockSprite;
             _isPlaced = false;
             _isDragging = false;
             transform.position = _slotPosition;
@@ -253,6 +261,7 @@ namespace _Code.Block
                 Vector2Int cell = _cells[i];
                 cellView.transform.localPosition = new Vector3((cell.x - _visualCenter.x) * displayCellSize, (cell.y - _visualCenter.y) * displayCellSize, 0f);
                 cellView.transform.localScale = Vector3.one * (displayCellSize * 0.9f);
+                cellView.SetSprite(BlockSprite);
                 cellView.SetColor(_color);
                 cellView.SetSortingOrder(_defaultSortingOrder);
             }

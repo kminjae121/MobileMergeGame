@@ -1,4 +1,5 @@
 using UnityEngine;
+using _Code.Block;
 using _Code.Field;
 
 namespace _Code.Mouse
@@ -15,9 +16,19 @@ namespace _Code.Mouse
 
         [SerializeField] private Corner _corner = Corner.TopLeft;
         [SerializeField, Min(0f)] private float _cornerPadding = 0.78f;
+        [SerializeField] private SpriteRenderer _renderer;
+
+        private void Awake()
+        {
+            if (_renderer == null)
+                _renderer = GetComponent<SpriteRenderer>();
+
+            ApplySprite();
+        }
 
         public void Initialize(BlockField blockField)
         {
+            ApplySprite();
             ApplyPosition(blockField);
         }
 
@@ -145,6 +156,15 @@ namespace _Code.Mouse
             }
 
             transform.position = position;
+        }
+
+        private void ApplySprite()
+        {
+            if (_renderer == null || BlockBlastSpriteLibrary.MouseSprite == null)
+                return;
+
+            _renderer.sprite = BlockBlastSpriteLibrary.MouseSprite;
+            _renderer.color = Color.white;
         }
 
         private static Vector2Int NormalizeDirection(Vector2Int direction)

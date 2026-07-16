@@ -7,6 +7,7 @@ namespace _Code.Block
     {
         public abstract IReadOnlyList<Vector2Int> Cells { get; }
         public abstract Color BlockColor { get; }
+        public abstract Sprite BlockSprite { get; }
         public int CellCount => Cells.Count;
     }   
 }

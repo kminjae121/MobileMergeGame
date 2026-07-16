@@ -116,7 +116,7 @@ namespace _Code.Field
                 Vector2Int point = anchor + cell;
 
                 if (TryGetField(point, out Field field))
-                    field.SetObject(block.gameObject, block.BlockColor, groupId);
+                    field.SetObject(block.gameObject, block.BlockColor, block.BlockSprite, groupId);
             }
         }
 
@@ -353,7 +353,7 @@ namespace _Code.Field
                 Vector2Int targetPoint = cell.Point + direction;
 
                 if (TryGetField(targetPoint, out Field field))
-                    field.SetObject(cell.Object, cell.Color, group.Id);
+                    field.SetObject(cell.Object, cell.Color, cell.Sprite, group.Id);
             }
         }
 
@@ -389,11 +389,13 @@ namespace _Code.Field
                 Point = field.Point;
                 Object = field.CurrentObject;
                 Color = field.CurrentColor;
+                Sprite = field.CurrentSprite;
             }
 
             public Vector2Int Point { get; }
             public GameObject Object { get; }
             public Color Color { get; }
+            public Sprite Sprite { get; }
         }
 
         private sealed class BlockGroup

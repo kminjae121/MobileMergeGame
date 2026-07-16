@@ -12,6 +12,7 @@ namespace _Code.Manager
         [SerializeField] private RandomBlockManager _randomBlockManager;
         [SerializeField] private BlockPiece[] _pieces;
         [SerializeField] private MouseView _mouse;
+        [SerializeField] private BlockBlastEnvironmentView _environmentView;
         [SerializeField] private TMP_Text _scoreText;
         [SerializeField] private TMP_Text _messageText;
         [SerializeField, Min(20f)] private float _swipeMinDistance = 75f;
@@ -23,6 +24,8 @@ namespace _Code.Manager
 
         private void Awake()
         {
+            DisableLegacyVisuals();
+
             if (_blockField == null)
             {
                 enabled = false;
@@ -33,6 +36,7 @@ namespace _Code.Manager
                 _randomBlockManager = GetComponent<RandomBlockManager>();
 
             ResolveMouse();
+            ResolveEnvironmentView();
         }
 
         private void Start()
@@ -42,6 +46,9 @@ namespace _Code.Manager
 
             _blockField.Rebuild();
             _blockField.ClearAll();
+            if (_environmentView != null)
+                _environmentView.Configure(_blockField, Camera.main);
+
             _randomBlockManager.Initialize(_pieces);
             if (_mouse != null)
                 _mouse.Initialize(_blockField);
@@ -201,6 +208,36 @@ namespace _Code.Manager
 
             if (mouseObject != null)
                 _mouse = mouseObject.AddComponent<MouseView>();
+        }
+
+        private void ResolveEnvironmentView()
+        {
+            if (_environmentView != null)
+                return;
+
+            _environmentView = GetComponent<BlockBlastEnvironmentView>();
+        }
+
+        private void DisableLegacyVisuals()
+        {
+            Transform root = transform.parent;
+            string[] legacyNames = { "Square", "Square (1)", "Square (2)", "Square (3)" };
+            Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+            foreach (Transform target in transforms)
+            {
+                if (root != null && target.IsChildOf(root))
+                    continue;
+
+                foreach (string legacyName in legacyNames)
+                {
+                    if (target.name == legacyName)
+                    {
+                        target.gameObject.SetActive(false);
+                        break;
+                    }
+                }
+            }
         }
 
         private void SetMessage(string message)

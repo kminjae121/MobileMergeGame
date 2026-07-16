@@ -17,6 +17,13 @@ namespace _Code.Editor
         private const int Width = 8;
         private const int Height = 8;
         private const float CellSize = 0.72f;
+        private const string CatBlockSpritePath = "Assets/Resources/BlockBlast/BlackCatBlockSprite.png";
+        private const string MouseSpritePath = "Assets/Resources/BlockBlast/MouseSprite.png";
+        private const string CleanCatHomeBackgroundSpritePath = "Assets/Resources/BlockBlast/CleanCatHomeBackground.png";
+        private const string CatTowerFrameSpritePath = "Assets/Resources/BlockBlast/CatTowerFrameSprite.png";
+        private const string BackgroundName = "CleanCatHomeBackground";
+        private const string CatTowerFrameName = "CatTowerFrame";
+        private const string TitleName = "TitleText";
 
         [MenuItem("Tools/Block Blast/Rebuild Sample Scene")]
         public static void RebuildSampleScene()
@@ -25,7 +32,11 @@ namespace _Code.Editor
             DisableLegacyGameplayObjects();
             RemoveGeneratedRoot();
 
-            Sprite sprite = GetDefaultSprite();
+            Sprite defaultSprite = GetDefaultSprite();
+            Sprite catBlockSprite = GetSprite(CatBlockSpritePath, defaultSprite);
+            Sprite mouseSprite = GetSprite(MouseSpritePath, defaultSprite);
+            Sprite backgroundSprite = GetSprite(CleanCatHomeBackgroundSpritePath, defaultSprite);
+            Sprite catTowerFrameSprite = GetSprite(CatTowerFrameSpritePath, defaultSprite);
             GameObject root = new GameObject(GeneratedRootName);
 
             Camera mainCamera = Camera.main;
@@ -34,19 +45,31 @@ namespace _Code.Editor
                 mainCamera.transform.position = new Vector3(0f, 0f, -10f);
                 mainCamera.orthographic = true;
                 mainCamera.orthographicSize = 6.2f;
-                mainCamera.backgroundColor = new Color(0.08f, 0.1f, 0.14f);
+                mainCamera.backgroundColor = new Color(0.98f, 0.96f, 0.92f);
             }
 
-            BlockField blockField = CreateBoard(root.transform, sprite);
-            MouseView mouse = CreateMouse(root.transform, sprite, blockField);
-            BlockPiece[] pieces = CreatePieces(root.transform, sprite, mainCamera);
+            SpriteRenderer backgroundRenderer = CreateSpriteRenderer(root.transform, BackgroundName, backgroundSprite, -30);
+            SpriteRenderer catTowerFrameRenderer = CreateSpriteRenderer(root.transform, CatTowerFrameName, catTowerFrameSprite, -2);
+            BlockField blockField = CreateBoard(root.transform, defaultSprite, catBlockSprite);
+            MouseView mouse = CreateMouse(root.transform, mouseSprite, blockField);
+            BlockPiece[] pieces = CreatePieces(root.transform, catBlockSprite, mainCamera);
+            CreateText(root.transform, "TitleText", "냥타워 마우스팡", new Vector3(0f, 5.35f, 0f), 8.5f, 0.66f);
             TextMeshPro scoreText = CreateText(root.transform, "ScoreText", "Score 0", new Vector3(0f, 4.75f, 0f), 8f, 0.52f);
             TextMeshPro messageText = CreateText(root.transform, "MessageText", string.Empty, new Vector3(0f, 4.18f, 0f), 7f, 0.42f);
+            TextMeshPro titleText = root.transform.Find(TitleName).GetComponent<TextMeshPro>();
 
             GameObject managerObject = new GameObject("BlockBlastManager");
             managerObject.transform.SetParent(root.transform);
             GameManager gameManager = managerObject.AddComponent<GameManager>();
+            BlockBlastEnvironmentView environmentView = managerObject.AddComponent<BlockBlastEnvironmentView>();
             RandomBlockManager randomBlockManager = managerObject.AddComponent<RandomBlockManager>();
+
+            SerializedObject environmentSerializedObject = new SerializedObject(environmentView);
+            environmentSerializedObject.FindProperty("_backgroundRenderer").objectReferenceValue = backgroundRenderer;
+            environmentSerializedObject.FindProperty("_catTowerFrameRenderer").objectReferenceValue = catTowerFrameRenderer;
+            environmentSerializedObject.FindProperty("_titleText").objectReferenceValue = titleText;
+            environmentSerializedObject.FindProperty("_catTowerFramePadding").floatValue = 3f;
+            environmentSerializedObject.ApplyModifiedPropertiesWithoutUndo();
 
             SerializedObject randomSerializedObject = new SerializedObject(randomBlockManager);
             randomSerializedObject.FindProperty("_pieces").arraySize = pieces.Length;
@@ -58,19 +81,21 @@ namespace _Code.Editor
             gameSerializedObject.FindProperty("_blockField").objectReferenceValue = blockField;
             gameSerializedObject.FindProperty("_randomBlockManager").objectReferenceValue = randomBlockManager;
             gameSerializedObject.FindProperty("_mouse").objectReferenceValue = mouse;
+            gameSerializedObject.FindProperty("_environmentView").objectReferenceValue = environmentView;
             gameSerializedObject.FindProperty("_pieces").arraySize = pieces.Length;
             for (int i = 0; i < pieces.Length; i++)
                 gameSerializedObject.FindProperty("_pieces").GetArrayElementAtIndex(i).objectReferenceValue = pieces[i];
             gameSerializedObject.FindProperty("_scoreText").objectReferenceValue = scoreText;
             gameSerializedObject.FindProperty("_messageText").objectReferenceValue = messageText;
             gameSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+            environmentView.Configure(blockField, mainCamera);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();
         }
 
-        private static BlockField CreateBoard(Transform parent, Sprite sprite)
+        private static BlockField CreateBoard(Transform parent, Sprite backgroundSprite, Sprite blockSprite)
         {
             GameObject boardObject = new GameObject("Board");
             boardObject.transform.SetParent(parent);
@@ -96,7 +121,7 @@ namespace _Code.Editor
                     fieldObject.transform.localScale = Vector3.one * (CellSize * 0.92f);
 
                     SpriteRenderer backgroundRenderer = fieldObject.AddComponent<SpriteRenderer>();
-                    backgroundRenderer.sprite = sprite;
+                    backgroundRenderer.sprite = backgroundSprite;
                     backgroundRenderer.color = new Color(0.16f, 0.2f, 0.27f);
                     backgroundRenderer.sortingOrder = 0;
 
@@ -109,7 +134,7 @@ namespace _Code.Editor
                     fillObject.transform.localScale = Vector3.one * 0.82f;
 
                     SpriteRenderer fillRenderer = fillObject.AddComponent<SpriteRenderer>();
-                    fillRenderer.sprite = sprite;
+                    fillRenderer.sprite = blockSprite;
                     fillRenderer.enabled = false;
                     fillRenderer.sortingOrder = 1;
 
@@ -190,6 +215,19 @@ namespace _Code.Editor
             return pieces;
         }
 
+        private static SpriteRenderer CreateSpriteRenderer(Transform parent, string name, Sprite sprite, int sortingOrder)
+        {
+            GameObject spriteObject = new GameObject(name);
+            spriteObject.transform.SetParent(parent);
+
+            SpriteRenderer spriteRenderer = spriteObject.AddComponent<SpriteRenderer>();
+            spriteRenderer.sprite = sprite;
+            spriteRenderer.color = Color.white;
+            spriteRenderer.sortingOrder = sortingOrder;
+
+            return spriteRenderer;
+        }
+
         private static TextMeshPro CreateText(Transform parent, string name, string text, Vector3 position, float width, float fontSize)
         {
             GameObject textObject = new GameObject(name);
@@ -200,7 +238,7 @@ namespace _Code.Editor
             textMeshPro.text = text;
             textMeshPro.fontSize = fontSize;
             textMeshPro.alignment = TextAlignmentOptions.Center;
-            textMeshPro.color = Color.white;
+            textMeshPro.color = new Color(0.23f, 0.16f, 0.11f);
             textMeshPro.rectTransform.sizeDelta = new Vector2(width, 1f);
 
             return textMeshPro;
@@ -214,6 +252,12 @@ namespace _Code.Editor
                 sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("Sprites/Default.psd");
 
             return sprite;
+        }
+
+        private static Sprite GetSprite(string assetPath, Sprite fallback)
+        {
+            Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+            return sprite != null ? sprite : fallback;
         }
 
         private static void DisableLegacyGameplayObjects()

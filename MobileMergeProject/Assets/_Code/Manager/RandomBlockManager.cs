@@ -49,8 +49,9 @@ namespace _Code.Manager
             {
                 BlockShape shape = _installableShapes[Random.Range(0, _installableShapes.Count)];
                 Color color = _colors[Random.Range(0, _colors.Length)];
+                Sprite catSprite = BlockBlastSpriteLibrary.GetRandomCatBlockSprite();
 
-                piece.Configure(shape, color);
+                piece.Configure(shape, color, catSprite);
             }
 
             return true;
