@@ -174,10 +174,15 @@ namespace _Code.Editor
             if (backgroundSprite != null)
                 changedCount += ConfigureBackground(root.transform, backgroundSprite);
 
+            BlockField blockField = root.GetComponentInChildren<BlockField>(true);
+
             if (frameSprite != null)
-                changedCount += ConfigureCatTowerFrame(root.transform, frameSprite, root.GetComponentInChildren<BlockField>(true));
+                changedCount += ConfigureCatTowerFrame(root.transform, frameSprite, blockField);
 
             changedCount += ConfigureTitle(root.transform);
+            changedCount += ConfigureStatusText(root.transform, "ScoreText", "Score 0", new Vector3(0f, 4.75f, 0f), 8f, 0.52f);
+            changedCount += ConfigureStatusText(root.transform, "MessageText", string.Empty, new Vector3(0f, 4.18f, 0f), 7f, 0.42f);
+            changedCount += ConfigureMouse(root, blockField);
             changedCount += AssignEnvironmentReferences(
                 environmentView,
                 FindRenderer(root.transform, BackgroundName),
@@ -268,6 +273,58 @@ namespace _Code.Editor
                 serializedObject.ApplyModifiedPropertiesWithoutUndo();
 
             return changedCount;
+        }
+
+        private static int ConfigureMouse(GameObject root, BlockField blockField)
+        {
+            Transform mouseTransform = root.transform.Find("Mouse");
+
+            if (mouseTransform == null || blockField == null)
+                return 0;
+
+            int changedCount = 0;
+            SpriteRenderer spriteRenderer = mouseTransform.GetComponent<SpriteRenderer>();
+            MouseView mouse = mouseTransform.GetComponent<MouseView>();
+
+            if (mouse == null)
+            {
+                mouse = mouseTransform.gameObject.AddComponent<MouseView>();
+                changedCount++;
+            }
+
+            SerializedObject serializedObject = new SerializedObject(mouse);
+            changedCount += AssignObjectReference(serializedObject, "_renderer", spriteRenderer);
+
+            if (changedCount > 0)
+                serializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            blockField.Rebuild();
+            mouse.Initialize(blockField);
+            return changedCount;
+        }
+
+        private static int ConfigureStatusText(Transform root, string name, string text, Vector3 position, float width, float fontSize)
+        {
+            bool changed = false;
+            TextMeshPro statusText = EnsureText(root, name, ref changed);
+            Color targetColor = new Color(0.23f, 0.16f, 0.11f);
+            Vector2 targetSize = new Vector2(width, 1f);
+
+            changed |= statusText.text != text ||
+                       statusText.color != targetColor ||
+                       statusText.transform.position != position ||
+                       statusText.rectTransform.sizeDelta != targetSize ||
+                       Mathf.Approximately(statusText.fontSize, fontSize) == false ||
+                       statusText.alignment != TextAlignmentOptions.Center;
+
+            statusText.text = text;
+            statusText.color = targetColor;
+            statusText.transform.position = position;
+            statusText.rectTransform.sizeDelta = targetSize;
+            statusText.fontSize = fontSize;
+            statusText.alignment = TextAlignmentOptions.Center;
+
+            return changed ? 1 : 0;
         }
 
         private static int DisableLegacySceneVisuals(GameObject blockBlastRoot)
@@ -379,6 +436,8 @@ namespace _Code.Editor
             if (blockField == null)
                 return 0;
 
+            blockField.Rebuild();
+
             bool changed = false;
             SpriteRenderer renderer = EnsureRenderer(root, CatTowerFrameName, ref changed);
             Vector3 bottomLeft = blockField.GetWorldPosition(Vector2Int.zero);
@@ -418,11 +477,16 @@ namespace _Code.Editor
 
         private static TextMeshPro EnsureTitleText(Transform root, ref bool changed)
         {
-            Transform child = root.Find(TitleName);
+            return EnsureText(root, TitleName, ref changed);
+        }
+
+        private static TextMeshPro EnsureText(Transform root, string objectName, ref bool changed)
+        {
+            Transform child = root.Find(objectName);
 
             if (child == null)
             {
-                GameObject titleObject = new GameObject(TitleName);
+                GameObject titleObject = new GameObject(objectName);
                 titleObject.transform.SetParent(root);
                 child = titleObject.transform;
                 changed = true;
