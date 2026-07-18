@@ -16,6 +16,7 @@ namespace _Code.Mouse
 
         [SerializeField] private Corner _corner = Corner.TopLeft;
         [SerializeField, Min(0f)] private float _cornerPadding = 0.78f;
+        [SerializeField] private float _cushionCenterYOffset = 0.3f;
         [SerializeField] private SpriteRenderer _renderer;
 
         private void Awake()
@@ -128,8 +129,8 @@ namespace _Code.Mouse
             Vector3 topRight = blockField.GetWorldPosition(new Vector2Int(blockField.Width - 1, blockField.Height - 1));
             float left = bottomLeft.x - _cornerPadding;
             float right = topRight.x + _cornerPadding;
-            float bottom = bottomLeft.y - _cornerPadding;
-            float top = topRight.y + _cornerPadding;
+            float bottom = bottomLeft.y - _cornerPadding + _cushionCenterYOffset;
+            float top = topRight.y + _cornerPadding + _cushionCenterYOffset;
             Vector3 position = transform.position;
 
             switch (_corner)

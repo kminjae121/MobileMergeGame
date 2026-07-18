@@ -25,6 +25,10 @@ namespace _Code.Editor
         private const string CatTowerFrameName = "CatTowerFrame";
         private const string TitleName = "TitleText";
         private const string GameTitle = "냥타워 마우스팡";
+        private const float MouseCornerPadding = 0.78f;
+        private const float MouseScale = 0.9f;
+        private const float MouseCushionCenterYOffset = 0.3f;
+        private const float CatTowerCornerCenterRatio = 0.35f;
 
         static BlockBlastSpriteFixer()
         {
@@ -246,7 +250,8 @@ namespace _Code.Editor
             changedCount += AssignObjectReference(serializedObject, "_backgroundRenderer", backgroundRenderer);
             changedCount += AssignObjectReference(serializedObject, "_catTowerFrameRenderer", catTowerFrameRenderer);
             changedCount += AssignObjectReference(serializedObject, "_titleText", titleText);
-            changedCount += AssignFloat(serializedObject, "_catTowerFramePadding", 3f);
+            changedCount += AssignFloat(serializedObject, "_mouseCornerPadding", MouseCornerPadding);
+            changedCount += AssignFloat(serializedObject, "_catTowerCornerCenterRatio", CatTowerCornerCenterRatio);
 
             if (changedCount > 0)
                 serializedObject.ApplyModifiedPropertiesWithoutUndo();
@@ -294,9 +299,18 @@ namespace _Code.Editor
 
             SerializedObject serializedObject = new SerializedObject(mouse);
             changedCount += AssignObjectReference(serializedObject, "_renderer", spriteRenderer);
+            changedCount += AssignFloat(serializedObject, "_cornerPadding", MouseCornerPadding);
+            changedCount += AssignFloat(serializedObject, "_cushionCenterYOffset", MouseCushionCenterYOffset);
 
             if (changedCount > 0)
                 serializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            Vector3 targetScale = new Vector3(MouseScale, MouseScale, 1f);
+            if (mouseTransform.localScale != targetScale)
+            {
+                mouseTransform.localScale = targetScale;
+                changedCount++;
+            }
 
             blockField.Rebuild();
             mouse.Initialize(blockField);
@@ -443,10 +457,10 @@ namespace _Code.Editor
             Vector3 bottomLeft = blockField.GetWorldPosition(Vector2Int.zero);
             Vector3 topRight = blockField.GetWorldPosition(new Vector2Int(blockField.Width - 1, blockField.Height - 1));
             Vector3 center = (bottomLeft + topRight) * 0.5f;
-            float boardWidth = Mathf.Abs(topRight.x - bottomLeft.x) + blockField.CellSize;
-            float boardHeight = Mathf.Abs(topRight.y - bottomLeft.y) + blockField.CellSize;
-            float targetWidth = boardWidth + blockField.CellSize * 3f;
-            float targetHeight = boardHeight + blockField.CellSize * 3f;
+            float mouseHalfWidth = Mathf.Abs(topRight.x - bottomLeft.x) * 0.5f + MouseCornerPadding;
+            float mouseHalfHeight = Mathf.Abs(topRight.y - bottomLeft.y) * 0.5f + MouseCornerPadding;
+            float targetWidth = mouseHalfWidth / CatTowerCornerCenterRatio;
+            float targetHeight = mouseHalfHeight / CatTowerCornerCenterRatio;
             Vector2 spriteSize = sprite.bounds.size;
             Vector3 scale = new Vector3(targetWidth / spriteSize.x, targetHeight / spriteSize.y, 1f);
 

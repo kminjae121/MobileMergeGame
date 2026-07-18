@@ -24,6 +24,10 @@ namespace _Code.Editor
         private const string BackgroundName = "CleanCatHomeBackground";
         private const string CatTowerFrameName = "CatTowerFrame";
         private const string TitleName = "TitleText";
+        private const float MouseCornerPadding = 0.78f;
+        private const float MouseScale = 0.9f;
+        private const float MouseCushionCenterYOffset = 0.3f;
+        private const float CatTowerCornerCenterRatio = 0.35f;
 
         [MenuItem("Tools/Block Blast/Rebuild Sample Scene")]
         public static void RebuildSampleScene()
@@ -68,7 +72,8 @@ namespace _Code.Editor
             environmentSerializedObject.FindProperty("_backgroundRenderer").objectReferenceValue = backgroundRenderer;
             environmentSerializedObject.FindProperty("_catTowerFrameRenderer").objectReferenceValue = catTowerFrameRenderer;
             environmentSerializedObject.FindProperty("_titleText").objectReferenceValue = titleText;
-            environmentSerializedObject.FindProperty("_catTowerFramePadding").floatValue = 3f;
+            environmentSerializedObject.FindProperty("_mouseCornerPadding").floatValue = MouseCornerPadding;
+            environmentSerializedObject.FindProperty("_catTowerCornerCenterRatio").floatValue = CatTowerCornerCenterRatio;
             environmentSerializedObject.ApplyModifiedPropertiesWithoutUndo();
 
             SerializedObject randomSerializedObject = new SerializedObject(randomBlockManager);
@@ -151,7 +156,7 @@ namespace _Code.Editor
         {
             GameObject mouseObject = new GameObject("Mouse");
             mouseObject.transform.SetParent(parent);
-            mouseObject.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
+            mouseObject.transform.localScale = new Vector3(MouseScale, MouseScale, 1f);
 
             SpriteRenderer renderer = mouseObject.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite;
@@ -159,6 +164,11 @@ namespace _Code.Editor
             renderer.sortingOrder = 5;
 
             MouseView mouse = mouseObject.AddComponent<MouseView>();
+            SerializedObject mouseSerializedObject = new SerializedObject(mouse);
+            mouseSerializedObject.FindProperty("_cornerPadding").floatValue = MouseCornerPadding;
+            mouseSerializedObject.FindProperty("_cushionCenterYOffset").floatValue = MouseCushionCenterYOffset;
+            mouseSerializedObject.FindProperty("_renderer").objectReferenceValue = renderer;
+            mouseSerializedObject.ApplyModifiedPropertiesWithoutUndo();
             mouse.Initialize(blockField);
             return mouse;
         }

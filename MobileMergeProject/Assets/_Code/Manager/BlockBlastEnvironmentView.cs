@@ -12,7 +12,8 @@ namespace _Code.Manager
         [SerializeField] private TextMeshPro _titleText;
         [SerializeField] private int _backgroundSortingOrder = -30;
         [SerializeField] private int _catTowerFrameSortingOrder = -2;
-        [SerializeField, Min(0f)] private float _catTowerFramePadding = 3f;
+        [SerializeField, Min(0f)] private float _mouseCornerPadding = 0.78f;
+        [SerializeField, Range(0.1f, 0.49f)] private float _catTowerCornerCenterRatio = 0.35f;
 
         private const string GameTitle = "\uB0E5\uD0C0\uC6CC \uB9C8\uC6B0\uC2A4\uD321";
 
@@ -73,10 +74,10 @@ namespace _Code.Manager
             if (_catTowerFrameRenderer.sprite == null)
                 return;
 
-            float boardWidth = Mathf.Abs(topRight.x - bottomLeft.x) + blockField.CellSize;
-            float boardHeight = Mathf.Abs(topRight.y - bottomLeft.y) + blockField.CellSize;
-            float targetWidth = boardWidth + blockField.CellSize * _catTowerFramePadding;
-            float targetHeight = boardHeight + blockField.CellSize * _catTowerFramePadding;
+            float mouseHalfWidth = Mathf.Abs(topRight.x - bottomLeft.x) * 0.5f + _mouseCornerPadding;
+            float mouseHalfHeight = Mathf.Abs(topRight.y - bottomLeft.y) * 0.5f + _mouseCornerPadding;
+            float targetWidth = mouseHalfWidth / _catTowerCornerCenterRatio;
+            float targetHeight = mouseHalfHeight / _catTowerCornerCenterRatio;
             Vector2 spriteSize = _catTowerFrameRenderer.sprite.bounds.size;
             _catTowerFrameRenderer.transform.localScale = new Vector3(targetWidth / spriteSize.x, targetHeight / spriteSize.y, 1f);
         }
