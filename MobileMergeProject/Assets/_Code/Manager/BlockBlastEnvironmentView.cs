@@ -15,7 +15,7 @@ namespace _Code.Manager
         [SerializeField, Min(0f)] private float _mouseCornerPadding = 0.78f;
         [SerializeField, Range(0.1f, 0.49f)] private float _catTowerCornerCenterRatio = 0.35f;
 
-        private const string GameTitle = "\uB0E5\uD0C0\uC6CC \uB9C8\uC6B0\uC2A4\uD321";
+        private const string GameTitle = "\uC950\uAD6C\uBA4D \uB9C8\uC6B0\uC2A4\uD321";
 
         public void Configure(BlockField blockField, Camera targetCamera)
         {
@@ -58,7 +58,7 @@ namespace _Code.Manager
             if (_catTowerFrameRenderer == null || blockField == null)
                 return;
 
-            Sprite sprite = BlockBlastSpriteLibrary.CatTowerFrameSprite;
+            Sprite sprite = BlockBlastSpriteLibrary.MouseHoleFrameSprite;
 
             if (sprite != null)
                 _catTowerFrameRenderer.sprite = sprite;

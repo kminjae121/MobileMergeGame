@@ -16,7 +16,7 @@ namespace _Code.Editor
         private const float TargetAspect = 9f / 16f;
 
         private const string BackgroundSpritePath = "Assets/Resources/BlockBlast/CleanCatHomeBackground.png";
-        private const string CatTowerSpritePath = "Assets/Resources/BlockBlast/CatTowerFrameSprite.png";
+        private const string MouseHoleSpritePath = "Assets/Resources/BlockBlast/MouseHoleFrameSprite.png";
         private const string MouseSpritePath = "Assets/Resources/BlockBlast/MouseSprite.png";
         private const string BlackCatSpritePath = "Assets/Resources/BlockBlast/BlackCatBlockSprite.png";
         private const string WhiteCatSpritePath = "Assets/Resources/BlockBlast/WhiteCatBlockSprite.png";
@@ -41,8 +41,8 @@ namespace _Code.Editor
 
             SpriteRenderer catTowerRenderer = CreateSpriteRenderer(
                 root.transform,
-                "CatTowerPreview",
-                GetSprite(CatTowerSpritePath, defaultSprite),
+                "MouseHolePreview",
+                GetSprite(MouseHoleSpritePath, defaultSprite),
                 -2,
                 new Vector3(0f, 0.1f, 0f));
             ScaleSpriteToHeight(catTowerRenderer, 4.95f);
@@ -84,7 +84,7 @@ namespace _Code.Editor
 
         private static void CreateTitle(Transform parent)
         {
-            TextMeshPro titleText = CreateText(parent, "TitleText", "냥타워 마우스팡", new Vector3(0f, 4.38f, 0f), 6.7f, 0.78f, 20);
+            TextMeshPro titleText = CreateText(parent, "TitleText", "\uC950\uAD6C\uBA4D \uB9C8\uC6B0\uC2A4\uD321", new Vector3(0f, 4.38f, 0f), 6.7f, 0.78f, 20);
             titleText.fontStyle = FontStyles.Bold;
             titleText.color = new Color(0.42f, 0.23f, 0.11f);
 

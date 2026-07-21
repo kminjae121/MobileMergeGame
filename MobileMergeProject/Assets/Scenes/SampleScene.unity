@@ -176,7 +176,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uB0E5\uD0C0\uC6CC \uB9C8\uC6B0\uC2A4\uD321"
+  m_text: "\uC950\uAD6C\uBA4D \uB9C8\uC6B0\uC2A4\uD321"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -327,7 +327,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.171875, y: 1.171875, z: 1.171875}
+  m_LocalScale: {x: 2.3437502, y: 2.3437502, z: 2.3437502}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3000000002}
@@ -1393,9 +1393,9 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: -2
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 3faf9827ea07405a9985e8649582f1bc, type: 3}
+  m_Sprite: {fileID: 21300000, guid: f1da05ed494c4dfa84958a0c39d9d288, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0

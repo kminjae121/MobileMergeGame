@@ -20,11 +20,11 @@ namespace _Code.Editor
         private const string CatBlockSpritePath = "Assets/Resources/BlockBlast/BlackCatBlockSprite.png";
         private const string MouseSpritePath = "Assets/Resources/BlockBlast/MouseSprite.png";
         private const string CleanCatHomeBackgroundSpritePath = "Assets/Resources/BlockBlast/CleanCatHomeBackground.png";
-        private const string CatTowerFrameSpritePath = "Assets/Resources/BlockBlast/CatTowerFrameSprite.png";
+        private const string MouseHoleFrameSpritePath = "Assets/Resources/BlockBlast/MouseHoleFrameSprite.png";
         private const string BackgroundName = "CleanCatHomeBackground";
         private const string CatTowerFrameName = "CatTowerFrame";
         private const string TitleName = "TitleText";
-        private const string GameTitle = "냥타워 마우스팡";
+        private const string GameTitle = "\uC950\uAD6C\uBA4D \uB9C8\uC6B0\uC2A4\uD321";
         private const float MouseCornerPadding = 0.78f;
         private const float MouseScale = 0.9f;
         private const float MouseCushionCenterYOffset = 0.3f;
@@ -170,7 +170,7 @@ namespace _Code.Editor
             bool environmentCreated = false;
             BlockBlastEnvironmentView environmentView = EnsureEnvironmentView(root, ref environmentCreated);
             Sprite backgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CleanCatHomeBackgroundSpritePath);
-            Sprite frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CatTowerFrameSpritePath);
+            Sprite frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(MouseHoleFrameSpritePath);
 
             if (environmentCreated)
                 changedCount++;
@@ -399,7 +399,7 @@ namespace _Code.Editor
         {
             bool changed = false;
             TextMeshPro titleText = EnsureTitleText(root, ref changed);
-            string targetText = "\uB0E5\uD0C0\uC6CC \uB9C8\uC6B0\uC2A4\uD321";
+            string targetText = GameTitle;
             Color targetColor = new Color(0.42f, 0.23f, 0.11f);
             Vector3 targetPosition = new Vector3(0f, 5.35f, 0f);
             Vector2 targetSize = new Vector2(8.5f, 1f);

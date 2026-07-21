@@ -20,7 +20,7 @@ namespace _Code.Editor
         private const string CatBlockSpritePath = "Assets/Resources/BlockBlast/BlackCatBlockSprite.png";
         private const string MouseSpritePath = "Assets/Resources/BlockBlast/MouseSprite.png";
         private const string CleanCatHomeBackgroundSpritePath = "Assets/Resources/BlockBlast/CleanCatHomeBackground.png";
-        private const string CatTowerFrameSpritePath = "Assets/Resources/BlockBlast/CatTowerFrameSprite.png";
+        private const string MouseHoleFrameSpritePath = "Assets/Resources/BlockBlast/MouseHoleFrameSprite.png";
         private const string BackgroundName = "CleanCatHomeBackground";
         private const string CatTowerFrameName = "CatTowerFrame";
         private const string TitleName = "TitleText";
@@ -40,7 +40,7 @@ namespace _Code.Editor
             Sprite catBlockSprite = GetSprite(CatBlockSpritePath, defaultSprite);
             Sprite mouseSprite = GetSprite(MouseSpritePath, defaultSprite);
             Sprite backgroundSprite = GetSprite(CleanCatHomeBackgroundSpritePath, defaultSprite);
-            Sprite catTowerFrameSprite = GetSprite(CatTowerFrameSpritePath, defaultSprite);
+            Sprite mouseHoleFrameSprite = GetSprite(MouseHoleFrameSpritePath, defaultSprite);
             GameObject root = new GameObject(GeneratedRootName);
 
             Camera mainCamera = Camera.main;
@@ -53,11 +53,11 @@ namespace _Code.Editor
             }
 
             SpriteRenderer backgroundRenderer = CreateSpriteRenderer(root.transform, BackgroundName, backgroundSprite, -30);
-            SpriteRenderer catTowerFrameRenderer = CreateSpriteRenderer(root.transform, CatTowerFrameName, catTowerFrameSprite, -2);
+            SpriteRenderer catTowerFrameRenderer = CreateSpriteRenderer(root.transform, CatTowerFrameName, mouseHoleFrameSprite, -2);
             BlockField blockField = CreateBoard(root.transform, defaultSprite, catBlockSprite);
             MouseView mouse = CreateMouse(root.transform, mouseSprite, blockField);
             BlockPiece[] pieces = CreatePieces(root.transform, catBlockSprite, mainCamera);
-            CreateText(root.transform, "TitleText", "냥타워 마우스팡", new Vector3(0f, 5.35f, 0f), 8.5f, 0.66f);
+            CreateText(root.transform, "TitleText", "\uC950\uAD6C\uBA4D \uB9C8\uC6B0\uC2A4\uD321", new Vector3(0f, 5.35f, 0f), 8.5f, 0.66f);
             TextMeshPro scoreText = CreateText(root.transform, "ScoreText", "Score 0", new Vector3(0f, 4.75f, 0f), 8f, 0.52f);
             TextMeshPro messageText = CreateText(root.transform, "MessageText", string.Empty, new Vector3(0f, 4.18f, 0f), 7f, 0.42f);
             TextMeshPro titleText = root.transform.Find(TitleName).GetComponent<TextMeshPro>();
