@@ -5,7 +5,7 @@ namespace _Code.Menu
 {
     public sealed class MainMenuController : MonoBehaviour
     {
-        [SerializeField] private string _gameSceneName = "SampleScene";
+        [SerializeField] private string _gameSceneName = "GameScene";
         [SerializeField] private Camera _mainCamera;
         [SerializeField] private Collider2D _gameStartButtonCollider;
         [SerializeField] private SpriteRenderer _gameStartButtonRenderer;

@@ -12,7 +12,7 @@ namespace _Code.Editor
 {
     public static class BlockBlastSceneBuilder
     {
-        private const string ScenePath = "Assets/Scenes/SampleScene.unity";
+        private const string ScenePath = "Assets/Scenes/GameScene.unity";
         private const string GeneratedRootName = "BlockBlastGame";
         private const int Width = 8;
         private const int Height = 8;
@@ -29,10 +29,10 @@ namespace _Code.Editor
         private const float MouseCushionCenterYOffset = 0.3f;
         private const float CatTowerCornerCenterRatio = 0.35f;
 
-        [MenuItem("Tools/Block Blast/Rebuild Sample Scene")]
-        public static void RebuildSampleScene()
+        [MenuItem("Tools/Block Blast/Rebuild Game Scene")]
+        public static void RebuildGameScene()
         {
-            Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            Scene scene = OpenOrCreateGameScene();
             DisableLegacyGameplayObjects();
             RemoveGeneratedRoot();
 
@@ -43,14 +43,7 @@ namespace _Code.Editor
             Sprite mouseHoleFrameSprite = GetSprite(MouseHoleFrameSpritePath, defaultSprite);
             GameObject root = new GameObject(GeneratedRootName);
 
-            Camera mainCamera = Camera.main;
-            if (mainCamera != null)
-            {
-                mainCamera.transform.position = new Vector3(0f, 0f, -10f);
-                mainCamera.orthographic = true;
-                mainCamera.orthographicSize = 6.2f;
-                mainCamera.backgroundColor = new Color(0.98f, 0.96f, 0.92f);
-            }
+            Camera mainCamera = EnsureMainCamera();
 
             SpriteRenderer backgroundRenderer = CreateSpriteRenderer(root.transform, BackgroundName, backgroundSprite, -30);
             SpriteRenderer catTowerFrameRenderer = CreateSpriteRenderer(root.transform, CatTowerFrameName, mouseHoleFrameSprite, -2);
@@ -58,7 +51,8 @@ namespace _Code.Editor
             MouseView mouse = CreateMouse(root.transform, mouseSprite, blockField);
             BlockPiece[] pieces = CreatePieces(root.transform, catBlockSprite, mainCamera);
             CreateText(root.transform, "TitleText", "\uC950\uAD6C\uBA4D \uB9C8\uC6B0\uC2A4\uD321", new Vector3(0f, 5.35f, 0f), 8.5f, 0.66f);
-            TextMeshPro scoreText = CreateText(root.transform, "ScoreText", "Score 0", new Vector3(0f, 4.75f, 0f), 8f, 0.52f);
+            TextMeshPro scoreText = CreateText(root.transform, "ScoreText", "Score 0", new Vector3(-1.9f, 4.75f, 0f), 3.8f, 0.46f);
+            TextMeshPro bestScoreText = CreateText(root.transform, "BestScoreText", "Best 0", new Vector3(1.9f, 4.75f, 0f), 3.8f, 0.46f);
             TextMeshPro messageText = CreateText(root.transform, "MessageText", string.Empty, new Vector3(0f, 4.18f, 0f), 7f, 0.42f);
             TextMeshPro titleText = root.transform.Find(TitleName).GetComponent<TextMeshPro>();
 
@@ -66,6 +60,7 @@ namespace _Code.Editor
             managerObject.transform.SetParent(root.transform);
             GameManager gameManager = managerObject.AddComponent<GameManager>();
             BlockBlastEnvironmentView environmentView = managerObject.AddComponent<BlockBlastEnvironmentView>();
+            JsonManager jsonManager = managerObject.AddComponent<JsonManager>();
             RandomBlockManager randomBlockManager = managerObject.AddComponent<RandomBlockManager>();
 
             SerializedObject environmentSerializedObject = new SerializedObject(environmentView);
@@ -87,17 +82,56 @@ namespace _Code.Editor
             gameSerializedObject.FindProperty("_randomBlockManager").objectReferenceValue = randomBlockManager;
             gameSerializedObject.FindProperty("_mouse").objectReferenceValue = mouse;
             gameSerializedObject.FindProperty("_environmentView").objectReferenceValue = environmentView;
+            gameSerializedObject.FindProperty("_jsonManager").objectReferenceValue = jsonManager;
             gameSerializedObject.FindProperty("_pieces").arraySize = pieces.Length;
             for (int i = 0; i < pieces.Length; i++)
                 gameSerializedObject.FindProperty("_pieces").GetArrayElementAtIndex(i).objectReferenceValue = pieces[i];
             gameSerializedObject.FindProperty("_scoreText").objectReferenceValue = scoreText;
+            gameSerializedObject.FindProperty("_bestScoreText").objectReferenceValue = bestScoreText;
             gameSerializedObject.FindProperty("_messageText").objectReferenceValue = messageText;
             gameSerializedObject.ApplyModifiedPropertiesWithoutUndo();
             environmentView.Configure(blockField, mainCamera);
 
             EditorSceneManager.MarkSceneDirty(scene);
-            EditorSceneManager.SaveScene(scene);
+            EditorSceneManager.SaveScene(scene, ScenePath);
             AssetDatabase.SaveAssets();
+        }
+
+        public static void RebuildSampleScene()
+        {
+            RebuildGameScene();
+        }
+
+        private static Scene OpenOrCreateGameScene()
+        {
+            SceneAsset sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath);
+
+            if (sceneAsset != null)
+                return EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+
+            return EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        }
+
+        private static Camera EnsureMainCamera()
+        {
+            Camera mainCamera = Camera.main;
+
+            if (mainCamera == null)
+            {
+                GameObject cameraObject = new GameObject("Main Camera");
+                cameraObject.tag = "MainCamera";
+                mainCamera = cameraObject.AddComponent<Camera>();
+
+                if (Object.FindFirstObjectByType<AudioListener>() == null)
+                    cameraObject.AddComponent<AudioListener>();
+            }
+
+            mainCamera.transform.position = new Vector3(0f, 0f, -10f);
+            mainCamera.orthographic = true;
+            mainCamera.orthographicSize = 6.2f;
+            mainCamera.clearFlags = CameraClearFlags.SolidColor;
+            mainCamera.backgroundColor = new Color(0.98f, 0.96f, 0.92f);
+            return mainCamera;
         }
 
         private static BlockField CreateBoard(Transform parent, Sprite backgroundSprite, Sprite blockSprite)

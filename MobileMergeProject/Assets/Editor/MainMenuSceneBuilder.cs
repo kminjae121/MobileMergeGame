@@ -11,7 +11,8 @@ namespace _Code.Editor
     public static class MainMenuSceneBuilder
     {
         private const string MainScenePath = "Assets/Scenes/MainScene.unity";
-        private const string GameScenePath = "Assets/Scenes/SampleScene.unity";
+        private const string GameScenePath = "Assets/Scenes/GameScene.unity";
+        private const string SampleScenePath = "Assets/Scenes/SampleScene.unity";
         private const string RootName = "MainMenu";
         private const float TargetAspect = 9f / 16f;
 
@@ -53,7 +54,7 @@ namespace _Code.Editor
             MainMenuController controller = CreateController(root.transform);
 
             SerializedObject controllerSerializedObject = new SerializedObject(controller);
-            controllerSerializedObject.FindProperty("_gameSceneName").stringValue = "SampleScene";
+            controllerSerializedObject.FindProperty("_gameSceneName").stringValue = "GameScene";
             controllerSerializedObject.FindProperty("_mainCamera").objectReferenceValue = mainCamera;
             controllerSerializedObject.FindProperty("_gameStartButtonCollider").objectReferenceValue = buttonObject.GetComponent<Collider2D>();
             controllerSerializedObject.FindProperty("_gameStartButtonRenderer").objectReferenceValue = buttonObject.GetComponent<SpriteRenderer>();
@@ -234,7 +235,7 @@ namespace _Code.Editor
 
             foreach (EditorBuildSettingsScene scene in EditorBuildSettings.scenes)
             {
-                if (scene.path == MainScenePath || scene.path == GameScenePath)
+                if (scene.path == MainScenePath || scene.path == GameScenePath || scene.path == SampleScenePath)
                     continue;
 
                 scenes.Add(scene);

@@ -13,13 +13,16 @@ namespace _Code.Manager
         [SerializeField] private BlockPiece[] _pieces;
         [SerializeField] private MouseView _mouse;
         [SerializeField] private BlockBlastEnvironmentView _environmentView;
+        [SerializeField] private JsonManager _jsonManager;
         [SerializeField] private TMP_Text _scoreText;
+        [SerializeField] private TMP_Text _bestScoreText;
         [SerializeField] private TMP_Text _messageText;
         [SerializeField, Min(20f)] private float _swipeMinDistance = 75f;
         [SerializeField] private bool _enableKeyboardInput = true;
 
         private readonly SwipeInputReader _swipeInputReader = new SwipeInputReader();
         private int _score;
+        private int _maxScore;
         private bool _isGameOver;
 
         private void Awake()
@@ -37,6 +40,7 @@ namespace _Code.Manager
 
             ResolveMouse();
             ResolveEnvironmentView();
+            ResolveJsonManager();
         }
 
         private void Start()
@@ -54,7 +58,9 @@ namespace _Code.Manager
                 _mouse.Initialize(_blockField);
 
             SubscribePieces();
+            LoadMaxScore();
             UpdateScoreText();
+            UpdateBestScoreText();
 
             if (!_randomBlockManager.GiveNewSet(_blockField))
             {
@@ -180,6 +186,7 @@ namespace _Code.Manager
         {
             _score += value;
             UpdateScoreText();
+            TryUpdateMaxScore();
         }
 
         private void UpdateScoreText()
@@ -188,9 +195,34 @@ namespace _Code.Manager
                 _scoreText.text = $"Score {_score}";
         }
 
+        private void UpdateBestScoreText()
+        {
+            if (_bestScoreText != null)
+                _bestScoreText.text = $"Best {_maxScore}";
+        }
+
+        private void LoadMaxScore()
+        {
+            if (_jsonManager == null)
+                return;
+
+            _jsonManager.Load();
+            _maxScore = _jsonManager.MaxScore;
+        }
+
+        private void TryUpdateMaxScore()
+        {
+            if (_jsonManager == null || !_jsonManager.TrySaveMaxScore(_score))
+                return;
+
+            _maxScore = _jsonManager.MaxScore;
+            UpdateBestScoreText();
+        }
+
         private void EndGame()
         {
             _isGameOver = true;
+            TryUpdateMaxScore();
             SetMessage("Game Over");
         }
 
@@ -216,6 +248,17 @@ namespace _Code.Manager
                 return;
 
             _environmentView = GetComponent<BlockBlastEnvironmentView>();
+        }
+
+        private void ResolveJsonManager()
+        {
+            if (_jsonManager != null)
+                return;
+
+            _jsonManager = GetComponent<JsonManager>();
+
+            if (_jsonManager == null)
+                _jsonManager = gameObject.AddComponent<JsonManager>();
         }
 
         private void DisableLegacyVisuals()

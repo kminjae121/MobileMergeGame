@@ -14,7 +14,7 @@ namespace _Code.Editor
     [InitializeOnLoad]
     public static class BlockBlastSpriteFixer
     {
-        private const string ScenePath = "Assets/Scenes/SampleScene.unity";
+        private const string ScenePath = "Assets/Scenes/GameScene.unity";
         private const string RootName = "BlockBlastGame";
         private const string SquareSpritePath = "Assets/_Asset/_Image/BlockSquare.png";
         private const string CatBlockSpritePath = "Assets/Resources/BlockBlast/BlackCatBlockSprite.png";
@@ -112,7 +112,7 @@ namespace _Code.Editor
             Debug.Log($"Assigned cat home environment sprites to {changedCount} Block Blast SpriteRenderers.");
         }
 
-        public static void ApplySampleSceneEnvironment()
+        public static void ApplyGameSceneEnvironment()
         {
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             GameObject root = GameObject.Find(RootName);
@@ -128,7 +128,12 @@ namespace _Code.Editor
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();
-            Debug.Log($"Applied cat home environment to SampleScene with {changedCount} saved changes.");
+            Debug.Log($"Applied mouse hole environment to GameScene with {changedCount} saved changes.");
+        }
+
+        public static void ApplySampleSceneEnvironment()
+        {
+            ApplyGameSceneEnvironment();
         }
 
         private static int ApplyCharacterSprites(GameObject root)
@@ -168,11 +173,16 @@ namespace _Code.Editor
         {
             int changedCount = 0;
             bool environmentCreated = false;
+            bool jsonManagerCreated = false;
             BlockBlastEnvironmentView environmentView = EnsureEnvironmentView(root, ref environmentCreated);
+            JsonManager jsonManager = EnsureJsonManager(root, ref jsonManagerCreated);
             Sprite backgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CleanCatHomeBackgroundSpritePath);
             Sprite frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(MouseHoleFrameSpritePath);
 
             if (environmentCreated)
+                changedCount++;
+
+            if (jsonManagerCreated)
                 changedCount++;
 
             if (backgroundSprite != null)
@@ -184,7 +194,8 @@ namespace _Code.Editor
                 changedCount += ConfigureCatTowerFrame(root.transform, frameSprite, blockField);
 
             changedCount += ConfigureTitle(root.transform);
-            changedCount += ConfigureStatusText(root.transform, "ScoreText", "Score 0", new Vector3(0f, 4.75f, 0f), 8f, 0.52f);
+            changedCount += ConfigureStatusText(root.transform, "ScoreText", "Score 0", new Vector3(-1.9f, 4.75f, 0f), 3.8f, 0.46f);
+            changedCount += ConfigureStatusText(root.transform, "BestScoreText", "Best 0", new Vector3(1.9f, 4.75f, 0f), 3.8f, 0.46f);
             changedCount += ConfigureStatusText(root.transform, "MessageText", string.Empty, new Vector3(0f, 4.18f, 0f), 7f, 0.42f);
             changedCount += ConfigureMouse(root, blockField);
             changedCount += AssignEnvironmentReferences(
@@ -192,7 +203,7 @@ namespace _Code.Editor
                 FindRenderer(root.transform, BackgroundName),
                 FindRenderer(root.transform, CatTowerFrameName),
                 FindTitle(root.transform));
-            changedCount += AssignGameManagerReferences(root, environmentView);
+            changedCount += AssignGameManagerReferences(root, environmentView, jsonManager);
             changedCount += DisableLegacySceneVisuals(root);
             return changedCount;
         }
@@ -215,6 +226,26 @@ namespace _Code.Editor
 
             changed = true;
             return targetObject.AddComponent<BlockBlastEnvironmentView>();
+        }
+
+        private static JsonManager EnsureJsonManager(GameObject root, ref bool changed)
+        {
+            GameManager gameManager = root.GetComponentInChildren<GameManager>(true);
+            GameObject targetObject = gameManager != null ? gameManager.gameObject : null;
+
+            if (targetObject == null)
+            {
+                Transform managerTransform = root.transform.Find("BlockBlastManager");
+                targetObject = managerTransform != null ? managerTransform.gameObject : root;
+            }
+
+            JsonManager jsonManager = targetObject.GetComponent<JsonManager>();
+
+            if (jsonManager != null)
+                return jsonManager;
+
+            changed = true;
+            return targetObject.AddComponent<JsonManager>();
         }
 
         private static SpriteRenderer FindRenderer(Transform root, string objectName)
@@ -259,7 +290,7 @@ namespace _Code.Editor
             return changedCount;
         }
 
-        private static int AssignGameManagerReferences(GameObject root, BlockBlastEnvironmentView environmentView)
+        private static int AssignGameManagerReferences(GameObject root, BlockBlastEnvironmentView environmentView, JsonManager jsonManager)
         {
             GameManager gameManager = root.GetComponentInChildren<GameManager>(true);
 
@@ -270,8 +301,10 @@ namespace _Code.Editor
             int changedCount = 0;
 
             changedCount += AssignObjectReference(serializedObject, "_environmentView", environmentView);
+            changedCount += AssignObjectReference(serializedObject, "_jsonManager", jsonManager);
             changedCount += AssignObjectReference(serializedObject, "_mouse", root.GetComponentInChildren<MouseView>(true));
             changedCount += AssignObjectReference(serializedObject, "_scoreText", FindText(root.transform, "ScoreText"));
+            changedCount += AssignObjectReference(serializedObject, "_bestScoreText", FindText(root.transform, "BestScoreText"));
             changedCount += AssignObjectReference(serializedObject, "_messageText", FindText(root.transform, "MessageText"));
 
             if (changedCount > 0)
