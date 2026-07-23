@@ -11,6 +11,7 @@ namespace _Code.Block
         private const string SphynxCatBlockSpritePath = "BlockBlast/SphynxCatBlockSprite";
         private const string MouseSpritePath = "BlockBlast/MouseSprite";
         private const string CleanCatHomeBackgroundSpritePath = "BlockBlast/CleanCatHomeBackground";
+        private const string NightCatHomeBackgroundSpritePath = "BlockBlast/NightCatHomeBackground";
         private const string CatTowerFrameSpritePath = "BlockBlast/CatTowerFrameSprite";
         private const string MouseHoleFrameSpritePath = "BlockBlast/MouseHoleFrameSprite";
 
@@ -21,6 +22,7 @@ namespace _Code.Block
         private static Sprite[] _catBlockSprites;
         private static Sprite _mouseSprite;
         private static Sprite _cleanCatHomeBackgroundSprite;
+        private static Sprite _nightCatHomeBackgroundSprite;
         private static Sprite _catTowerFrameSprite;
         private static Sprite _mouseHoleFrameSprite;
 
@@ -28,6 +30,7 @@ namespace _Code.Block
         public static Sprite[] CatBlockSprites => GetCatBlockSprites();
         public static Sprite MouseSprite => LoadSprite(MouseSpritePath, ref _mouseSprite);
         public static Sprite CleanCatHomeBackgroundSprite => LoadSprite(CleanCatHomeBackgroundSpritePath, ref _cleanCatHomeBackgroundSprite);
+        public static Sprite NightCatHomeBackgroundSprite => LoadSprite(NightCatHomeBackgroundSpritePath, ref _nightCatHomeBackgroundSprite) ?? CleanCatHomeBackgroundSprite;
         public static Sprite CatTowerFrameSprite => LoadSprite(CatTowerFrameSpritePath, ref _catTowerFrameSprite);
         public static Sprite MouseHoleFrameSprite => LoadSprite(MouseHoleFrameSpritePath, ref _mouseHoleFrameSprite) ?? CatTowerFrameSprite;
 

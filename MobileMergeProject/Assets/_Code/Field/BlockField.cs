@@ -6,8 +6,8 @@ namespace _Code.Field
 {
     public class BlockField : MonoBehaviour
     {
-        [SerializeField, Min(1)] private int _width = 8;
-        [SerializeField, Min(1)] private int _height = 8;
+        [SerializeField, Min(1)] private int _width = 6;
+        [SerializeField, Min(1)] private int _height = 6;
         [SerializeField, Min(0.1f)] private float _cellSize = 0.72f;
         [SerializeField, Min(0.1f)] private float _snapDistance = 0.55f;
 

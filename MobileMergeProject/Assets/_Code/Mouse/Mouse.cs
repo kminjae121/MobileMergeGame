@@ -16,7 +16,7 @@ namespace _Code.Mouse
 
         [SerializeField] private Corner _corner = Corner.TopLeft;
         [SerializeField, Min(0f)] private float _cornerPadding = 0.78f;
-        [SerializeField] private float _cushionCenterYOffset = 0.3f;
+        [SerializeField] private float _cushionCenterYOffset = 0.18f;
         [SerializeField] private SpriteRenderer _renderer;
 
         private void Awake()

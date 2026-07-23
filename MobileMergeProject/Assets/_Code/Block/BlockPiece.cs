@@ -10,7 +10,7 @@ namespace _Code.Block
         [SerializeField] private BlockCellView[] _cellViews;
         [SerializeField] private Camera _mainCamera;
         [SerializeField, Min(0.1f)] private float _cellSize = 0.72f;
-        [SerializeField, Min(0.1f)] private float _slotCellSize = 0.46f;
+        [SerializeField, Min(0.1f)] private float _slotCellSize = 0.34f;
         [SerializeField] private float _dragLift = 0.45f;
         [SerializeField] private int _defaultSortingOrder = 3;
         [SerializeField] private int _dragSortingOrder = 20;

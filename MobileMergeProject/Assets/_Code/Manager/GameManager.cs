@@ -8,61 +8,54 @@ namespace _Code.Manager
 {
     public class GameManager : MonoBehaviour
     {
-        [SerializeField] private BlockField _blockField;
-        [SerializeField] private RandomBlockManager _randomBlockManager;
-        [SerializeField] private BlockPiece[] _pieces;
-        [SerializeField] private MouseView _mouse;
-        [SerializeField] private BlockBlastEnvironmentView _environmentView;
-        [SerializeField] private JsonManager _jsonManager;
-        [SerializeField] private TMP_Text _scoreText;
-        [SerializeField] private TMP_Text _bestScoreText;
-        [SerializeField] private TMP_Text _messageText;
-        [SerializeField, Min(20f)] private float _swipeMinDistance = 75f;
-        [SerializeField] private bool _enableKeyboardInput = true;
+        [SerializeField] private BlockField blockField;
+        [SerializeField] private RandomBlockManager randomBlockManager;
+        [SerializeField] private BlockPiece[] pieces;
+        [SerializeField] private MouseView mouse;
+        [SerializeField] private JsonManager jsonManager;
+        [SerializeField] private TextMeshProUGUI scoreText;
+        [SerializeField] private TextMeshProUGUI bestScoreText;
+        [SerializeField] private TextMeshProUGUI messageText;
+        [SerializeField, Min(20f)] private float swipeMinDistance = 75f;
+        [SerializeField] private bool enableKeyboardInput = true;
 
         private readonly SwipeInputReader _swipeInputReader = new SwipeInputReader();
+        private const string ScoreSuffix = "\uC810";
+        private const string BestScoreLabel = "\uCD5C\uACE0\uC810\uC218 : ";
         private int _score;
         private int _maxScore;
         private bool _isGameOver;
 
         private void Awake()
         {
-            DisableLegacyVisuals();
-
-            if (_blockField == null)
+            if (blockField == null)
             {
                 enabled = false;
                 return;
             }
 
-            if (_randomBlockManager == null)
-                _randomBlockManager = GetComponent<RandomBlockManager>();
-
-            ResolveMouse();
-            ResolveEnvironmentView();
-            ResolveJsonManager();
+            if (randomBlockManager == null)
+                randomBlockManager = GetComponent<RandomBlockManager>();
         }
 
         private void Start()
         {
-            if (_randomBlockManager == null)
+            if (randomBlockManager == null)
                 return;
 
-            _blockField.Rebuild();
-            _blockField.ClearAll();
-            if (_environmentView != null)
-                _environmentView.Configure(_blockField, Camera.main);
+            blockField.Rebuild();
+            blockField.ClearAll();
 
-            _randomBlockManager.Initialize(_pieces);
-            if (_mouse != null)
-                _mouse.Initialize(_blockField);
+            randomBlockManager.Initialize(pieces);
+            if (mouse != null)
+                mouse.Initialize(blockField);
 
             SubscribePieces();
             LoadMaxScore();
             UpdateScoreText();
             UpdateBestScoreText();
 
-            if (!_randomBlockManager.GiveNewSet(_blockField))
+            if (!randomBlockManager.GiveNewSet(blockField))
             {
                 EndGame();
                 return;
@@ -82,7 +75,7 @@ namespace _Code.Manager
                 return;
             }
 
-            if (_swipeInputReader.TryReadDirection(_swipeMinDistance, _enableKeyboardInput, out Vector2Int direction))
+            if (_swipeInputReader.TryReadDirection(swipeMinDistance, enableKeyboardInput, out Vector2Int direction))
                 ShiftBoard(direction);
         }
 
@@ -99,31 +92,31 @@ namespace _Code.Manager
                 return;
             }
 
-            if (!_blockField.TryGetAnchorFor(piece, out Vector2Int anchor) || !_blockField.CanInstall(piece, anchor))
+            if (!blockField.TryGetAnchorFor(piece, out Vector2Int anchor) || !blockField.CanInstall(piece, anchor))
             {
                 piece.ReturnToSlot();
                 return;
             }
 
-            piece.SnapTo(_blockField.GetWorldPosition(anchor));
-            _blockField.Install(piece, anchor);
+            piece.SnapTo(blockField.GetWorldPosition(anchor));
+            blockField.Install(piece, anchor);
             AddScore(piece.CellCount * 10);
 
-            int clearedLines = _blockField.ClearCompletedLines();
+            int clearedLines = blockField.ClearCompletedLines();
             if (clearedLines > 0)
                 AddScore(clearedLines * 100 + clearedLines * clearedLines * 50);
 
             piece.MarkPlaced();
 
-            if (_randomBlockManager.AreAllPiecesPlaced() && !_randomBlockManager.GiveNewSet(_blockField))
+            if (randomBlockManager.AreAllPiecesPlaced() && !randomBlockManager.GiveNewSet(blockField))
             {
                 EndGame();
                 return;
             }
 
-            if (!_randomBlockManager.HasAnyAvailablePlacement(_blockField))
+            if (!randomBlockManager.HasAnyAvailablePlacement(blockField))
             {
-                if (_blockField.HasAnyCompactMove())
+                if (blockField.HasAnyCompactMove())
                     SetMessage("Swipe to Shift");
                 else
                     EndGame();
@@ -136,24 +129,24 @@ namespace _Code.Manager
 
         private void ShiftBoard(Vector2Int direction)
         {
-            if (_randomBlockManager == null)
+            if (randomBlockManager == null)
                 return;
 
-            if (_mouse != null && !_mouse.TryMove(direction, _blockField))
+            if (mouse != null && !mouse.TryMove(direction, blockField))
             {
                 SetMessage("Edge");
                 return;
             }
 
-            bool moved = _blockField.Compact(direction);
-            int clearedLines = _blockField.ClearCompletedLines();
+            bool moved = blockField.Compact(direction);
+            int clearedLines = blockField.ClearCompletedLines();
 
             if (clearedLines > 0)
                 AddScore(clearedLines * 90 + clearedLines * clearedLines * 40);
 
-            if (!_randomBlockManager.HasAnyAvailablePlacement(_blockField))
+            if (!randomBlockManager.HasAnyAvailablePlacement(blockField))
             {
-                if (_blockField.HasAnyCompactMove())
+                if (blockField.HasAnyCompactMove())
                     SetMessage("Swipe to Shift");
                 else
                     EndGame();
@@ -166,16 +159,16 @@ namespace _Code.Manager
 
         private void SubscribePieces()
         {
-            foreach (BlockPiece piece in _pieces)
+            foreach (BlockPiece piece in pieces)
                 piece.Released += HandlePieceReleased;
         }
 
         private void UnsubscribePieces()
         {
-            if (_pieces == null)
+            if (pieces == null)
                 return;
 
-            foreach (BlockPiece piece in _pieces)
+            foreach (BlockPiece piece in pieces)
             {
                 if (piece != null)
                     piece.Released -= HandlePieceReleased;
@@ -191,31 +184,31 @@ namespace _Code.Manager
 
         private void UpdateScoreText()
         {
-            if (_scoreText != null)
-                _scoreText.text = $"Score {_score}";
+            if (scoreText != null)
+                scoreText.text = $"{_score}{ScoreSuffix}";
         }
 
         private void UpdateBestScoreText()
         {
-            if (_bestScoreText != null)
-                _bestScoreText.text = $"Best {_maxScore}";
+            if (bestScoreText != null)
+                bestScoreText.text = $"{BestScoreLabel}{_maxScore}";
         }
 
         private void LoadMaxScore()
         {
-            if (_jsonManager == null)
+            if (jsonManager == null)
                 return;
 
-            _jsonManager.Load();
-            _maxScore = _jsonManager.MaxScore;
+            jsonManager.Load();
+            _maxScore = jsonManager.MaxScore;
         }
 
         private void TryUpdateMaxScore()
         {
-            if (_jsonManager == null || !_jsonManager.TrySaveMaxScore(_score))
+            if (jsonManager == null || !jsonManager.TrySaveMaxScore(_score))
                 return;
 
-            _maxScore = _jsonManager.MaxScore;
+            _maxScore = jsonManager.MaxScore;
             UpdateBestScoreText();
         }
 
@@ -226,67 +219,10 @@ namespace _Code.Manager
             SetMessage("Game Over");
         }
 
-        private void ResolveMouse()
-        {
-            if (_mouse != null)
-                return;
-
-            _mouse = FindFirstObjectByType<MouseView>();
-
-            if (_mouse != null)
-                return;
-
-            GameObject mouseObject = GameObject.Find("Mouse");
-
-            if (mouseObject != null)
-                _mouse = mouseObject.AddComponent<MouseView>();
-        }
-
-        private void ResolveEnvironmentView()
-        {
-            if (_environmentView != null)
-                return;
-
-            _environmentView = GetComponent<BlockBlastEnvironmentView>();
-        }
-
-        private void ResolveJsonManager()
-        {
-            if (_jsonManager != null)
-                return;
-
-            _jsonManager = GetComponent<JsonManager>();
-
-            if (_jsonManager == null)
-                _jsonManager = gameObject.AddComponent<JsonManager>();
-        }
-
-        private void DisableLegacyVisuals()
-        {
-            Transform root = transform.parent;
-            string[] legacyNames = { "Square", "Square (1)", "Square (2)", "Square (3)" };
-            Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-
-            foreach (Transform target in transforms)
-            {
-                if (root != null && target.IsChildOf(root))
-                    continue;
-
-                foreach (string legacyName in legacyNames)
-                {
-                    if (target.name == legacyName)
-                    {
-                        target.gameObject.SetActive(false);
-                        break;
-                    }
-                }
-            }
-        }
-
         private void SetMessage(string message)
         {
-            if (_messageText != null)
-                _messageText.text = message;
+            if (messageText != null)
+                messageText.text = message;
         }
 
         private sealed class SwipeInputReader
