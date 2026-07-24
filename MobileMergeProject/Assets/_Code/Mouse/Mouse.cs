@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using _Code.Block;
 using _Code.Field;
 
@@ -15,8 +16,9 @@ namespace _Code.Mouse
         }
 
         [SerializeField] private Corner _corner = Corner.TopLeft;
-        [SerializeField, Min(0f)] private float _cornerPadding = 0.78f;
-        [SerializeField] private float _cushionCenterYOffset = 0.18f;
+        [SerializeField, Min(0f), FormerlySerializedAs("_cornerPadding")] private float _cornerHorizontalPadding = 1.08f;
+        [SerializeField, Min(0f)] private float _cornerVerticalPadding = 1.06f;
+        [SerializeField, FormerlySerializedAs("_cushionCenterYOffset")] private float _positionYOffset;
         [SerializeField] private SpriteRenderer _renderer;
 
         private void Awake()
@@ -127,10 +129,10 @@ namespace _Code.Mouse
 
             Vector3 bottomLeft = blockField.GetWorldPosition(Vector2Int.zero);
             Vector3 topRight = blockField.GetWorldPosition(new Vector2Int(blockField.Width - 1, blockField.Height - 1));
-            float left = bottomLeft.x - _cornerPadding;
-            float right = topRight.x + _cornerPadding;
-            float bottom = bottomLeft.y - _cornerPadding + _cushionCenterYOffset;
-            float top = topRight.y + _cornerPadding + _cushionCenterYOffset;
+            float left = bottomLeft.x - _cornerHorizontalPadding;
+            float right = topRight.x + _cornerHorizontalPadding;
+            float bottom = bottomLeft.y - _cornerVerticalPadding + _positionYOffset;
+            float top = topRight.y + _cornerVerticalPadding + _positionYOffset;
             Vector3 position = transform.position;
 
             switch (_corner)

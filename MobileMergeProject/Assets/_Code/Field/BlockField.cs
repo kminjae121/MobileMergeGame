@@ -9,7 +9,7 @@ namespace _Code.Field
         [SerializeField, Min(1)] private int _width = 6;
         [SerializeField, Min(1)] private int _height = 6;
         [SerializeField, Min(0.1f)] private float _cellSize = 0.72f;
-        [SerializeField, Min(0.1f)] private float _snapDistance = 0.55f;
+        [SerializeField, Min(0.1f)] private float _snapDistance = 0.8f;
 
         private readonly List<Field> _fields = new List<Field>();
         private int _nextGroupId = 1;
@@ -57,7 +57,7 @@ namespace _Code.Field
 
         public bool TryGetAnchorFor(BlockPiece piece, out Vector2Int point)
         {
-            return TryGetClosestPoint(piece.GetAnchorWorldPosition(), out point);
+            return TryGetClosestPoint(piece.GetReleaseAnchorWorldPosition(), out point);
         }
 
         public bool TryGetClosestPoint(Vector3 worldPosition, out Vector2Int point)
@@ -181,8 +181,14 @@ namespace _Code.Field
 
         public int ClearCompletedLines()
         {
+            return ClearCompletedLines(null);
+        }
+
+        public int ClearCompletedLines(ICollection<Vector3> clearedWorldPositions)
+        {
             HashSet<Field> fieldsToClear = new HashSet<Field>();
             int clearedLineCount = 0;
+            clearedWorldPositions?.Clear();
 
             for (int y = 0; y < _height; y++)
             {
@@ -205,7 +211,10 @@ namespace _Code.Field
             }
 
             foreach (Field field in fieldsToClear)
+            {
+                clearedWorldPositions?.Add(field.transform.position);
                 field.ClearObject();
+            }
 
             return clearedLineCount;
         }

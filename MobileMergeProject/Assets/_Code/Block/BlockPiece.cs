@@ -10,7 +10,7 @@ namespace _Code.Block
         [SerializeField] private BlockCellView[] _cellViews;
         [SerializeField] private Camera _mainCamera;
         [SerializeField, Min(0.1f)] private float _cellSize = 0.72f;
-        [SerializeField, Min(0.1f)] private float _slotCellSize = 0.34f;
+        [SerializeField, Min(0.1f)] private float _slotCellSize = 0.72f;
         [SerializeField] private float _dragLift = 0.45f;
         [SerializeField] private int _defaultSortingOrder = 3;
         [SerializeField] private int _dragSortingOrder = 20;
@@ -26,9 +26,11 @@ namespace _Code.Block
         private Vector2 _visualCenter;
         private Vector3 _slotPosition;
         private Vector3 _dragOffset;
+        private Vector3 _releaseAnchorWorldPosition;
         private int _activePointerId = MousePointerId;
         private bool _isDragging;
         private bool _isPlaced = true;
+        private bool _hasReleaseAnchorWorldPosition;
 
         public event Action<BlockPiece> Released;
 
@@ -37,6 +39,7 @@ namespace _Code.Block
         public override Sprite BlockSprite => _catSprite != null ? _catSprite : BlockBlastSpriteLibrary.CatBlockSprite;
         public bool IsPlaced => _isPlaced;
         public float CellSize => _cellSize;
+        public static BlockPiece ActivePiece => _activePiece;
         public static bool IsAnyDragging => _activePiece != null;
 
         private void Awake()
@@ -76,6 +79,7 @@ namespace _Code.Block
             if (_isDragging)
                 _isDragging = false;
 
+            _hasReleaseAnchorWorldPosition = false;
             ClearActivePointer();
         }
 
@@ -102,23 +106,30 @@ namespace _Code.Block
             _catSprite = catSprite != null ? catSprite : BlockBlastSpriteLibrary.CatBlockSprite;
             _isPlaced = false;
             _isDragging = false;
+            _hasReleaseAnchorWorldPosition = false;
             transform.position = _slotPosition;
             ApplySlotView();
         }
 
         public Vector3 GetAnchorWorldPosition()
         {
-            return transform.position - new Vector3(_visualCenter.x * _cellSize, _visualCenter.y * _cellSize, 0f);
+            return transform.position - GetAnchorOffset();
+        }
+
+        public Vector3 GetReleaseAnchorWorldPosition()
+        {
+            return _hasReleaseAnchorWorldPosition ? _releaseAnchorWorldPosition : GetAnchorWorldPosition();
         }
 
         public void SnapTo(Vector3 anchorWorldPosition)
         {
-            transform.position = anchorWorldPosition + new Vector3(_visualCenter.x * _cellSize, _visualCenter.y * _cellSize, 0f);
+            transform.position = anchorWorldPosition + GetAnchorOffset();
         }
 
         public void ReturnToSlot()
         {
             _isDragging = false;
+            _hasReleaseAnchorWorldPosition = false;
             ClearActivePointer();
             transform.position = _slotPosition;
             ApplySlotView();
@@ -128,6 +139,7 @@ namespace _Code.Block
         public void MarkPlaced()
         {
             _isPlaced = true;
+            _hasReleaseAnchorWorldPosition = false;
             ClearActivePointer();
             gameObject.SetActive(false);
         }
@@ -144,7 +156,7 @@ namespace _Code.Block
                         continue;
 
                     if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
-                        EndDrag();
+                        EndDrag(touch.position);
                     else
                         MoveDrag(touch.position);
 
@@ -175,7 +187,7 @@ namespace _Code.Block
             if (_isDragging && _activePointerId == MousePointerId)
             {
                 if (Input.GetMouseButtonUp(0))
-                    EndDrag();
+                    EndDrag(Input.mousePosition);
                 else if (Input.GetMouseButton(0))
                     MoveDrag(Input.mousePosition);
 
@@ -197,13 +209,24 @@ namespace _Code.Block
             _activePointerId = pointerId;
             ApplyDragView();
             _dragOffset = transform.position - GetPointerWorldPosition(screenPosition);
+            _hasReleaseAnchorWorldPosition = false;
             _isDragging = true;
             SetSortingOrder(_dragSortingOrder);
+            MoveDrag(screenPosition);
         }
 
         private void MoveDrag(Vector3 screenPosition)
         {
-            transform.position = GetPointerWorldPosition(screenPosition) + _dragOffset + Vector3.up * _dragLift;
+            Vector3 releasePosition = GetPointerWorldPosition(screenPosition) + _dragOffset;
+            _releaseAnchorWorldPosition = releasePosition - GetAnchorOffset();
+            _hasReleaseAnchorWorldPosition = true;
+            transform.position = releasePosition + Vector3.up * _dragLift;
+        }
+
+        private void EndDrag(Vector3 screenPosition)
+        {
+            MoveDrag(screenPosition);
+            EndDrag();
         }
 
         private void EndDrag()
@@ -309,6 +332,11 @@ namespace _Code.Block
             transform.localScale = Vector3.one;
             UpdateCellViews(_cellSize);
             UpdateCollider(_cellSize);
+        }
+
+        private Vector3 GetAnchorOffset()
+        {
+            return new Vector3(_visualCenter.x * _cellSize, _visualCenter.y * _cellSize, 0f);
         }
     }
 }

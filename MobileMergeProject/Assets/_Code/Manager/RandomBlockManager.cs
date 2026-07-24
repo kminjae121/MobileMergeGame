@@ -85,6 +85,23 @@ namespace _Code.Manager
             return false;
         }
 
+        public bool CanPlaceAllRemainingPieces(BlockField blockField)
+        {
+            if (_pieces == null || blockField == null)
+                return false;
+
+            foreach (BlockPiece piece in _pieces)
+            {
+                if (piece == null || piece.IsPlaced)
+                    continue;
+
+                if (!blockField.HasAnyPlacement(piece))
+                    return false;
+            }
+
+            return true;
+        }
+
         public bool HasAnyInstallableShape(BlockField blockField)
         {
             if (blockField == null)

@@ -1,5 +1,8 @@
+using System.Collections.Generic;
 using _Code.Block;
+using _Code.Effects;
 using _Code.Field;
+using Code.Core.Events.Bus;
 using TMPro;
 using UnityEngine;
 using MouseView = _Code.Mouse.Mouse;
@@ -13,12 +16,17 @@ namespace _Code.Manager
         [SerializeField] private BlockPiece[] pieces;
         [SerializeField] private MouseView mouse;
         [SerializeField] private JsonManager jsonManager;
+        [SerializeField] private HapticFeedback hapticFeedback;
+        [SerializeField] private BlockPlacementPreview placementPreview;
+        [SerializeField] private GameOverView gameOverView;
+        [SerializeField] private LineClearPawParticleEffect lineClearParticleEffect;
         [SerializeField] private TextMeshProUGUI scoreText;
         [SerializeField] private TextMeshProUGUI bestScoreText;
         [SerializeField] private TextMeshProUGUI messageText;
         [SerializeField, Min(20f)] private float swipeMinDistance = 75f;
         [SerializeField] private bool enableKeyboardInput = true;
 
+        private readonly List<Vector3> _clearedBlockPositions = new List<Vector3>(36);
         private readonly SwipeInputReader _swipeInputReader = new SwipeInputReader();
         private const string ScoreSuffix = "\uC810";
         private const string BestScoreLabel = "\uCD5C\uACE0\uC810\uC218 : ";
@@ -36,6 +44,18 @@ namespace _Code.Manager
 
             if (randomBlockManager == null)
                 randomBlockManager = GetComponent<RandomBlockManager>();
+
+            if (hapticFeedback == null)
+                hapticFeedback = GetComponent<HapticFeedback>();
+
+            if (placementPreview == null)
+                placementPreview = GetComponent<BlockPlacementPreview>();
+
+            if (placementPreview == null)
+                placementPreview = gameObject.AddComponent<BlockPlacementPreview>();
+
+            if (lineClearParticleEffect == null)
+                lineClearParticleEffect = GetComponentInChildren<LineClearPawParticleEffect>(true);
         }
 
         private void Start()
@@ -54,6 +74,7 @@ namespace _Code.Manager
             LoadMaxScore();
             UpdateScoreText();
             UpdateBestScoreText();
+            gameOverView?.Hide();
 
             if (!randomBlockManager.GiveNewSet(blockField))
             {
@@ -79,6 +100,11 @@ namespace _Code.Manager
                 ShiftBoard(direction);
         }
 
+        private void LateUpdate()
+        {
+            UpdatePlacementPreview();
+        }
+
         private void OnDestroy()
         {
             UnsubscribePieces();
@@ -86,6 +112,8 @@ namespace _Code.Manager
 
         private void HandlePieceReleased(BlockPiece piece)
         {
+            placementPreview?.Hide();
+
             if (_isGameOver)
             {
                 piece.ReturnToSlot();
@@ -102,9 +130,12 @@ namespace _Code.Manager
             blockField.Install(piece, anchor);
             AddScore(piece.CellCount * 10);
 
-            int clearedLines = blockField.ClearCompletedLines();
+            int clearedLines = blockField.ClearCompletedLines(_clearedBlockPositions);
             if (clearedLines > 0)
+            {
                 AddScore(clearedLines * 100 + clearedLines * clearedLines * 50);
+                PlayLineClearEffects(clearedLines, _clearedBlockPositions);
+            }
 
             piece.MarkPlaced();
 
@@ -114,13 +145,9 @@ namespace _Code.Manager
                 return;
             }
 
-            if (!randomBlockManager.HasAnyAvailablePlacement(blockField))
+            if (!randomBlockManager.CanPlaceAllRemainingPieces(blockField))
             {
-                if (blockField.HasAnyCompactMove())
-                    SetMessage("Swipe to Shift");
-                else
-                    EndGame();
-
+                EndGame();
                 return;
             }
 
@@ -139,18 +166,17 @@ namespace _Code.Manager
             }
 
             bool moved = blockField.Compact(direction);
-            int clearedLines = blockField.ClearCompletedLines();
+            int clearedLines = blockField.ClearCompletedLines(_clearedBlockPositions);
 
             if (clearedLines > 0)
-                AddScore(clearedLines * 90 + clearedLines * clearedLines * 40);
-
-            if (!randomBlockManager.HasAnyAvailablePlacement(blockField))
             {
-                if (blockField.HasAnyCompactMove())
-                    SetMessage("Swipe to Shift");
-                else
-                    EndGame();
+                AddScore(clearedLines * 90 + clearedLines * clearedLines * 40);
+                PlayLineClearEffects(clearedLines, _clearedBlockPositions);
+            }
 
+            if (!randomBlockManager.CanPlaceAllRemainingPieces(blockField))
+            {
+                EndGame();
                 return;
             }
 
@@ -180,6 +206,17 @@ namespace _Code.Manager
             _score += value;
             UpdateScoreText();
             TryUpdateMaxScore();
+        }
+
+        private void PlayLineClearEffects(int clearedLines, IReadOnlyList<Vector3> clearedBlockPositions)
+        {
+            Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.2f));
+
+            if (lineClearParticleEffect != null)
+                lineClearParticleEffect.PlayAtPositions(clearedBlockPositions, clearedLines);
+
+            if (hapticFeedback != null)
+                hapticFeedback.PlayLineClear();
         }
 
         private void UpdateScoreText()
@@ -215,8 +252,29 @@ namespace _Code.Manager
         private void EndGame()
         {
             _isGameOver = true;
+            placementPreview?.Hide();
             TryUpdateMaxScore();
-            SetMessage("Game Over");
+            SetMessage(string.Empty);
+
+            if (gameOverView != null)
+                gameOverView.Show(_score, _maxScore);
+            else
+                SetMessage("Game Over");
+        }
+
+        private void UpdatePlacementPreview()
+        {
+            if (placementPreview == null)
+                return;
+
+            BlockPiece activePiece = BlockPiece.ActivePiece;
+            if (_isGameOver || activePiece == null)
+            {
+                placementPreview.Hide();
+                return;
+            }
+
+            placementPreview.Show(blockField, activePiece);
         }
 
         private void SetMessage(string message)
