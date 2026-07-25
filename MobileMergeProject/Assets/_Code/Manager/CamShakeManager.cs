@@ -22,7 +22,9 @@ namespace Code.Cam
         private void ShakeCam(CamShakeEvent evt)
         {
             if(evt.force != 0)
-                source.GenerateImpulse(evt.force);  
+                source.GenerateImpulse(evt.force);
+
+            Debug.Log(evt.force);
         }
     }
 }
