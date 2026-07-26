@@ -160,10 +160,8 @@ namespace _Code.Manager
                 return;
 
             if (mouse != null && !mouse.TryMove(direction, blockField))
-            {
-                SetMessage("Edge");
                 return;
-            }
+            
 
             bool moved = blockField.Compact(direction);
             int clearedLines = blockField.ClearCompletedLines(_clearedBlockPositions);
