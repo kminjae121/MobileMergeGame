@@ -161,7 +161,8 @@ namespace _Code.Manager
 
             if (mouse != null && !mouse.TryMove(direction, blockField))
                 return;
-            
+
+            Debug.Log("CatBlast");
 
             bool moved = blockField.Compact(direction);
             int clearedLines = blockField.ClearCompletedLines(_clearedBlockPositions);
