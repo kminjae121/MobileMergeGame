@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using _Code.Block;
 using _Code.Effects;
 using _Code.Field;
+using _Code.Server;
 using Code.Core.Events.Bus;
 using TMPro;
 using UnityEngine;
@@ -16,6 +17,7 @@ namespace _Code.Manager
         [SerializeField] private BlockPiece[] pieces;
         [SerializeField] private MouseView mouse;
         [SerializeField] private JsonManager jsonManager;
+        [SerializeField] private ServerScoreClient serverScoreClient;
         [SerializeField] private HapticFeedback hapticFeedback;
         [SerializeField] private BlockPlacementPreview placementPreview;
         [SerializeField] private GameOverView gameOverView;
@@ -44,6 +46,9 @@ namespace _Code.Manager
 
             if (randomBlockManager == null)
                 randomBlockManager = GetComponent<RandomBlockManager>();
+
+            if (serverScoreClient == null)
+                serverScoreClient = GetComponent<ServerScoreClient>();
 
             if (hapticFeedback == null)
                 hapticFeedback = GetComponent<HapticFeedback>();
@@ -232,20 +237,47 @@ namespace _Code.Manager
 
         private void LoadMaxScore()
         {
-            if (jsonManager == null)
-                return;
+            if (jsonManager != null)
+            {
+                jsonManager.Load();
+                _maxScore = jsonManager.MaxScore;
+            }
 
-            jsonManager.Load();
-            _maxScore = jsonManager.MaxScore;
+            if (serverScoreClient != null)
+                serverScoreClient.FetchScore(ApplyServerMaxScore);
         }
 
         private void TryUpdateMaxScore()
         {
-            if (jsonManager == null || !jsonManager.TrySaveMaxScore(_score))
+            if (_score <= _maxScore)
                 return;
 
-            _maxScore = jsonManager.MaxScore;
+            _maxScore = _score;
+
+            if (jsonManager != null)
+                jsonManager.SetMaxScore(_maxScore);
+
             UpdateBestScoreText();
+
+            if (serverScoreClient != null)
+                serverScoreClient.SubmitScore(_maxScore);
+        }
+
+        private void ApplyServerMaxScore(int serverScore)
+        {
+            if (serverScore > _maxScore)
+            {
+                _maxScore = serverScore;
+
+                if (jsonManager != null)
+                    jsonManager.SetMaxScore(_maxScore);
+
+                UpdateBestScoreText();
+                return;
+            }
+
+            if (_maxScore > serverScore && serverScoreClient != null)
+                serverScoreClient.SubmitScore(_maxScore);
         }
 
         private void EndGame()

@@ -12119,6 +12119,7 @@ GameObject:
   - component: {fileID: 1139778818}
   - component: {fileID: 1139778819}
   - component: {fileID: 1139778820}
+  - component: {fileID: 1139778821}
   m_Layer: 0
   m_Name: BlockBlastManager
   m_TagString: Untagged
@@ -12174,6 +12175,7 @@ MonoBehaviour:
   - {fileID: 519405367}
   mouse: {fileID: 340847340}
   jsonManager: {fileID: 1139778814}
+  serverScoreClient: {fileID: 1139778821}
   hapticFeedback: {fileID: 1139778818}
   placementPreview: {fileID: 1139778819}
   gameOverView: {fileID: 2143000004}
@@ -12249,6 +12251,24 @@ MonoBehaviour:
   _perBlockSparkleBurstCount: 2
   _burstRadius: 0.72
   _sortingOrder: 60
+--- !u!114 &1139778821
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1139778812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f73a7fba9bb4a07b2d1e94c55f1e343, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _baseUrl: 
+  _fetchScorePath: /players/{playerId}/score
+  _submitScorePath: /players/{playerId}/score
+  _submitMethod: POST
+  _timeoutSeconds: 10
+  _logRequests: 0
 --- !u!1 &1143755603
 GameObject:
   m_ObjectHideFlags: 0

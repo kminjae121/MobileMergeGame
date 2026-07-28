@@ -820,6 +820,7 @@ GameObject:
   - component: {fileID: 1678449948}
   - component: {fileID: 1678449949}
   - component: {fileID: 1678449950}
+  - component: {fileID: 1678449951}
   m_Layer: 0
   m_Name: MainMenuController
   m_TagString: Untagged
@@ -857,6 +858,7 @@ MonoBehaviour:
   gameSceneName: GameScene
   startBtn: {fileID: 1874765373}
   jsonManager: {fileID: 1678449950}
+  serverScoreClient: {fileID: 1678449951}
   maxScoreTxt: {fileID: 2113876899}
 --- !u!114 &1678449950
 MonoBehaviour:
@@ -871,6 +873,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Code.Manager.JsonManager
   _fileName: score-data.json
+--- !u!114 &1678449951
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1678449947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f73a7fba9bb4a07b2d1e94c55f1e343, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _baseUrl: 
+  _fetchScorePath: /players/{playerId}/score
+  _submitScorePath: /players/{playerId}/score
+  _submitMethod: POST
+  _timeoutSeconds: 10
+  _logRequests: 0
 --- !u!1 &1700827337
 GameObject:
   m_ObjectHideFlags: 0

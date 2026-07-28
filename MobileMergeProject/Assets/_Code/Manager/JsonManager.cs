@@ -52,6 +52,12 @@ namespace _Code.Manager
             return true;
         }
 
+        public void SetMaxScore(int score)
+        {
+            _saveData.MaxScore = Mathf.Max(0, score);
+            Save();
+        }
+
         public void Save()
         {
             string directory = Path.GetDirectoryName(SavePath);
