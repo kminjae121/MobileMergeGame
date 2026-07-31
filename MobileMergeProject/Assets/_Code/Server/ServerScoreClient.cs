@@ -13,16 +13,25 @@ namespace _Code.Server
         [SerializeField] private string _submitMethod = "POST";
         [SerializeField, Min(1)] private int _timeoutSeconds = 10;
         [SerializeField] private bool _logRequests;
+        [SerializeField] private bool _logConnectionFailures;
 
         public string PlayerId => PlayerIdProvider.PlayerId;
         public bool IsConfigured => !string.IsNullOrWhiteSpace(_baseUrl);
 
         public void FetchScore(Action<int> completed)
         {
-            if (!IsConfigured)
-                return;
+            FetchScore(completed, null);
+        }
 
-            StartCoroutine(FetchScoreRoutine(completed));
+        public void FetchScore(Action<int> completed, Action failed)
+        {
+            if (!IsConfigured)
+            {
+                failed?.Invoke();
+                return;
+            }
+
+            StartCoroutine(FetchScoreRoutine(completed, failed));
         }
 
         public void SubmitScore(int score)
@@ -33,9 +42,14 @@ namespace _Code.Server
             StartCoroutine(SubmitScoreRoutine(Mathf.Max(0, score)));
         }
 
-        private System.Collections.IEnumerator FetchScoreRoutine(Action<int> completed)
+        private System.Collections.IEnumerator FetchScoreRoutine(Action<int> completed, Action failed)
         {
-            string url = BuildUrl(_fetchScorePath);
+            if (!TryBuildUrl(_fetchScorePath, out string url))
+            {
+                failed?.Invoke();
+                yield break;
+            }
+
             if (_logRequests)
                 Debug.Log($"Fetch score from server: {url}");
 
@@ -48,14 +62,16 @@ namespace _Code.Server
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"Failed to fetch score. {request.error}");
+                    LogConnectionFailure($"Failed to fetch score. {request.error}");
+                    failed?.Invoke();
                     yield break;
                 }
 
-                PlayerScoreDto response = JsonUtility.FromJson<PlayerScoreDto>(request.downloadHandler.text);
+                PlayerScoreDto response = ParseScoreResponse(request.downloadHandler.text);
                 if (response == null)
                 {
-                    Debug.LogWarning("Failed to parse server score response.");
+                    LogConnectionFailure("Failed to parse server score response.");
+                    failed?.Invoke();
                     yield break;
                 }
 
@@ -65,7 +81,9 @@ namespace _Code.Server
 
         private System.Collections.IEnumerator SubmitScoreRoutine(int score)
         {
-            string url = BuildUrl(_submitScorePath);
+            if (!TryBuildUrl(_submitScorePath, out string url))
+                yield break;
+
             PlayerScoreDto payload = new PlayerScoreDto(PlayerId, score);
             string json = JsonUtility.ToJson(payload);
             byte[] body = Encoding.UTF8.GetBytes(json);
@@ -84,15 +102,45 @@ namespace _Code.Server
                 yield return request.SendWebRequest();
 
                 if (request.result != UnityWebRequest.Result.Success)
-                    Debug.LogWarning($"Failed to submit score. {request.error}");
+                    LogConnectionFailure($"Failed to submit score. {request.error}");
             }
         }
 
-        private string BuildUrl(string path)
+        private bool TryBuildUrl(string path, out string url)
         {
-            string playerId = UnityWebRequest.EscapeURL(PlayerId);
-            string expandedPath = string.IsNullOrWhiteSpace(path) ? string.Empty : path.Replace("{playerId}", playerId);
-            return $"{_baseUrl.TrimEnd('/')}/{expandedPath.TrimStart('/')}";
+            url = string.Empty;
+
+            try
+            {
+                string playerId = UnityWebRequest.EscapeURL(PlayerId);
+                string expandedPath = string.IsNullOrWhiteSpace(path) ? string.Empty : path.Replace("{playerId}", playerId);
+                url = $"{_baseUrl.TrimEnd('/')}/{expandedPath.TrimStart('/')}";
+                return true;
+            }
+            catch (Exception exception)
+            {
+                LogConnectionFailure($"Failed to build server URL. {exception.Message}");
+                return false;
+            }
+        }
+
+        private PlayerScoreDto ParseScoreResponse(string json)
+        {
+            try
+            {
+                return JsonUtility.FromJson<PlayerScoreDto>(json);
+            }
+            catch (Exception exception)
+            {
+                LogConnectionFailure($"Failed to parse server score response. {exception.Message}");
+                return null;
+            }
+        }
+
+        private void LogConnectionFailure(string message)
+        {
+            if (_logConnectionFailures)
+                Debug.Log(message);
         }
 
         [Serializable]

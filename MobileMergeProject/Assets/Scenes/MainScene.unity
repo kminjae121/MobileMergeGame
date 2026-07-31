@@ -856,7 +856,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Code.Menu.MainMenuController
   gameSceneName: GameScene
+  stageSceneName: StageScene
   startBtn: {fileID: 1874765373}
+  stageBtn: {fileID: 2100001003}
   jsonManager: {fileID: 1678449950}
   serverScoreClient: {fileID: 1678449951}
   maxScoreTxt: {fileID: 2113876899}
@@ -885,7 +887,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f73a7fba9bb4a07b2d1e94c55f1e343, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _baseUrl: 
+  _baseUrl: http://192.168.45.28:5253
   _fetchScorePath: /players/{playerId}/score
   _submitScorePath: /players/{playerId}/score
   _submitMethod: POST
@@ -1195,7 +1197,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 0
+  m_Interactable: 1
   m_TargetGraphic: {fileID: 2100001004}
   m_OnClick:
     m_PersistentCalls:

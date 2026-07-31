@@ -1,6 +1,7 @@
 using System;
 using _Code.Manager;
 using _Code.Server;
+using _Code.Stage;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,7 +12,9 @@ namespace _Code.Menu
     public sealed class MainMenuController : MonoBehaviour
     {
         [SerializeField] private string gameSceneName = "GameScene";
+        [SerializeField] private string stageSceneName = "StageScene";
         [SerializeField] private Button startBtn;
+        [SerializeField] private Button stageBtn;
         [SerializeField] private JsonManager jsonManager;
         [SerializeField] private ServerScoreClient serverScoreClient;
         [SerializeField] private TextMeshProUGUI maxScoreTxt;
@@ -20,6 +23,9 @@ namespace _Code.Menu
         {
             if (startBtn != null)
                 startBtn.onClick.AddListener(StartGame);
+
+            if (stageBtn != null)
+                stageBtn.onClick.AddListener(OpenStageScene);
 
             if (serverScoreClient == null)
                 serverScoreClient = GetComponent<ServerScoreClient>();
@@ -31,13 +37,16 @@ namespace _Code.Menu
             }
 
             if (serverScoreClient != null)
-                serverScoreClient.FetchScore(ApplyServerScore);
+                serverScoreClient.FetchScore(ApplyServerScore, ApplyLocalScoreOnly);
         }
 
         private void OnDestroy()
         {
             if (startBtn != null)
                 startBtn.onClick.RemoveListener(StartGame);
+
+            if (stageBtn != null)
+                stageBtn.onClick.RemoveListener(OpenStageScene);
         }
 
         private void ApplyServerScore(int serverScore)
@@ -48,8 +57,18 @@ namespace _Code.Menu
                 return;
             }
 
+            int localScore = jsonManager.MaxScore;
             jsonManager.TrySaveMaxScore(serverScore);
             UpdateMaxScoreText(jsonManager.MaxScore);
+
+            if (localScore > serverScore)
+                serverScoreClient.SubmitScore(localScore);
+        }
+
+        private void ApplyLocalScoreOnly()
+        {
+            if (jsonManager != null)
+                UpdateMaxScoreText(jsonManager.MaxScore);
         }
 
         private void UpdateMaxScoreText(int maxScore)
@@ -60,6 +79,8 @@ namespace _Code.Menu
 
         public void StartGame()
         {
+            StageRunContext.SelectInfiniteMode();
+
             if (string.IsNullOrEmpty(gameSceneName) == false)
             {
                 SceneManager.LoadScene(gameSceneName);
@@ -68,6 +89,12 @@ namespace _Code.Menu
 
             int nextSceneIndex = SceneManager.GetActiveScene().buildIndex + 1;
             SceneManager.LoadScene(nextSceneIndex);
+        }
+
+        public void OpenStageScene()
+        {
+            if (!string.IsNullOrEmpty(stageSceneName))
+                SceneManager.LoadScene(stageSceneName);
         }
     }
 }

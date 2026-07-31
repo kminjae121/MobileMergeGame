@@ -3,6 +3,7 @@ using _Code.Block;
 using _Code.Effects;
 using _Code.Field;
 using _Code.Server;
+using _Code.Stage;
 using Code.Core.Events.Bus;
 using TMPro;
 using UnityEngine;
@@ -32,9 +33,13 @@ namespace _Code.Manager
         private readonly SwipeInputReader _swipeInputReader = new SwipeInputReader();
         private const string ScoreSuffix = "\uC810";
         private const string BestScoreLabel = "\uCD5C\uACE0\uC810\uC218 : ";
+        private const string StageLabel = "\uC2A4\uD14C\uC774\uC9C0";
+        private const string GoalLabel = "\uBAA9\uD45C";
         private int _score;
         private int _maxScore;
         private bool _isGameOver;
+        private bool _isStageMode;
+        private StageDefinition _stageDefinition;
 
         private void Awake()
         {
@@ -70,6 +75,7 @@ namespace _Code.Manager
 
             blockField.Rebuild();
             blockField.ClearAll();
+            InitializeStageMode();
 
             randomBlockManager.Initialize(pieces);
             if (mouse != null)
@@ -87,7 +93,7 @@ namespace _Code.Manager
                 return;
             }
 
-            SetMessage(string.Empty);
+            SetMessage(GetStartMessage());
         }
 
         private void Update()
@@ -144,6 +150,9 @@ namespace _Code.Manager
 
             piece.MarkPlaced();
 
+            if (TryCompleteStage())
+                return;
+
             if (randomBlockManager.AreAllPiecesPlaced() && !randomBlockManager.GiveNewSet(blockField))
             {
                 EndGame();
@@ -178,6 +187,9 @@ namespace _Code.Manager
                 PlayLineClearEffects(clearedLines, _clearedBlockPositions);
             }
 
+            if (TryCompleteStage())
+                return;
+
             if (!randomBlockManager.CanPlaceAllRemainingPieces(blockField))
             {
                 EndGame();
@@ -185,6 +197,22 @@ namespace _Code.Manager
             }
 
             SetMessage(moved || clearedLines > 0 ? "Shift" : string.Empty);
+        }
+
+        private void InitializeStageMode()
+        {
+            _isStageMode = StageRunContext.TryGetSelectedStage(out _stageDefinition);
+
+            if (!_isStageMode)
+                return;
+
+            int groupId = 10000 + _stageDefinition.Number * 100;
+
+            foreach (Vector2Int point in _stageDefinition.StartingCells)
+            {
+                if (blockField.TryGetField(point, out _Code.Field.Field field))
+                    field.SetObject(gameObject, Color.white, BlockBlastSpriteLibrary.GetRandomCatBlockSprite(), groupId++);
+            }
         }
 
         private void SubscribePieces()
@@ -212,6 +240,26 @@ namespace _Code.Manager
             TryUpdateMaxScore();
         }
 
+        private bool TryCompleteStage()
+        {
+            if (!_isStageMode || _isGameOver || _score < _stageDefinition.TargetScore)
+                return false;
+
+            CompleteStage();
+            return true;
+        }
+
+        private void CompleteStage()
+        {
+            _isGameOver = true;
+            placementPreview?.Hide();
+            TryUpdateMaxScore();
+            SetMessage($"{StageLabel} {_stageDefinition.Number} \uD074\uB9AC\uC5B4!");
+
+            if (gameOverView != null)
+                gameOverView.ShowStageClear(_score, _maxScore);
+        }
+
         private void PlayLineClearEffects(int clearedLines, IReadOnlyList<Vector3> clearedBlockPositions)
         {
             Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.2f));
@@ -226,7 +274,7 @@ namespace _Code.Manager
         private void UpdateScoreText()
         {
             if (scoreText != null)
-                scoreText.text = $"{_score}{ScoreSuffix}";
+                scoreText.text = _isStageMode ? $"{_score}/{_stageDefinition.TargetScore}{ScoreSuffix}" : $"{_score}{ScoreSuffix}";
         }
 
         private void UpdateBestScoreText()
@@ -244,7 +292,7 @@ namespace _Code.Manager
             }
 
             if (serverScoreClient != null)
-                serverScoreClient.FetchScore(ApplyServerMaxScore);
+                serverScoreClient.FetchScore(ApplyServerMaxScore, KeepLocalMaxScore);
         }
 
         private void TryUpdateMaxScore()
@@ -280,6 +328,11 @@ namespace _Code.Manager
                 serverScoreClient.SubmitScore(_maxScore);
         }
 
+        private void KeepLocalMaxScore()
+        {
+            UpdateBestScoreText();
+        }
+
         private void EndGame()
         {
             _isGameOver = true;
@@ -312,6 +365,14 @@ namespace _Code.Manager
         {
             if (messageText != null)
                 messageText.text = message;
+        }
+
+        private string GetStartMessage()
+        {
+            if (!_isStageMode)
+                return string.Empty;
+
+            return $"{StageLabel} {_stageDefinition.Number} / {GoalLabel} {_stageDefinition.TargetScore}{ScoreSuffix}";
         }
 
         private sealed class SwipeInputReader
