@@ -11,6 +11,8 @@ namespace _Code.Block
         [SerializeField] private Camera _mainCamera;
         [SerializeField, Min(0.1f)] private float _cellSize = 0.72f;
         [SerializeField, Min(0.1f)] private float _slotCellSize = 0.72f;
+        [SerializeField, Min(0.1f)] private float _slotCellScaleMultiplier = 0.9f;
+        [SerializeField, Min(0.1f)] private float _dragCellScaleMultiplier = 1.14f;
         [SerializeField] private float _dragLift = 0.45f;
         [SerializeField] private int _defaultSortingOrder = 3;
         [SerializeField] private int _dragSortingOrder = 20;
@@ -270,7 +272,7 @@ namespace _Code.Block
             _activePointerId = MousePointerId;
         }
 
-        private void UpdateCellViews(float displayCellSize)
+        private void UpdateCellViews(float displayCellSize, float cellScaleMultiplier)
         {
             for (int i = 0; i < _cellViews.Length; i++)
             {
@@ -283,7 +285,7 @@ namespace _Code.Block
 
                 Vector2Int cell = _cells[i];
                 cellView.transform.localPosition = new Vector3((cell.x - _visualCenter.x) * displayCellSize, (cell.y - _visualCenter.y) * displayCellSize, 0f);
-                cellView.transform.localScale = Vector3.one * (displayCellSize * 0.9f);
+                cellView.transform.localScale = Vector3.one * (displayCellSize * cellScaleMultiplier);
                 cellView.SetSprite(BlockSprite);
                 cellView.SetColor(_color);
                 cellView.SetSortingOrder(_defaultSortingOrder);
@@ -323,14 +325,14 @@ namespace _Code.Block
         private void ApplySlotView()
         {
             transform.localScale = Vector3.one;
-            UpdateCellViews(_slotCellSize);
+            UpdateCellViews(_slotCellSize, _slotCellScaleMultiplier);
             UpdateCollider(_slotCellSize);
         }
 
         private void ApplyDragView()
         {
             transform.localScale = Vector3.one;
-            UpdateCellViews(_cellSize);
+            UpdateCellViews(_cellSize, _dragCellScaleMultiplier);
             UpdateCollider(_cellSize);
         }
 

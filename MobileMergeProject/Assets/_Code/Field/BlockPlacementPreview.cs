@@ -7,7 +7,7 @@ namespace _Code.Field
     public sealed class BlockPlacementPreview : MonoBehaviour
     {
         [SerializeField] private Color _canInstallColor = new Color(0.35f, 0.85f, 1f, 0.7f);
-        [SerializeField, Min(0.1f)] private float _cellSizeMultiplier = 0.92f;
+        [SerializeField, Min(0.1f)] private float _cellSizeMultiplier = 1f;
         [SerializeField] private int _sortingOrder = 12;
 
         private const int PreviewTextureSize = 32;

@@ -5542,8 +5542,10 @@ MonoBehaviour:
   - {fileID: 591303919}
   - {fileID: 1603323910}
   _mainCamera: {fileID: 1531758390}
-  _cellSize: 0.72
+  _cellSize: 1
   _slotCellSize: 0.72
+  _slotCellScaleMultiplier: 0.9
+  _dragCellScaleMultiplier: 1.14
   _dragLift: 0.45
   _defaultSortingOrder: 3
   _dragSortingOrder: 20
@@ -7744,8 +7746,10 @@ MonoBehaviour:
   - {fileID: 515245488}
   - {fileID: 1114057972}
   _mainCamera: {fileID: 1531758390}
-  _cellSize: 0.72
+  _cellSize: 1
   _slotCellSize: 0.72
+  _slotCellScaleMultiplier: 0.9
+  _dragCellScaleMultiplier: 1.14
   _dragLift: 0.45
   _defaultSortingOrder: 3
   _dragSortingOrder: 20
@@ -12228,7 +12232,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _canInstallColor: {r: 1, g: 0.99801093, b: 0.93396217, a: 0.3647059}
-  _cellSizeMultiplier: 0.92
+  _cellSizeMultiplier: 1
   _sortingOrder: 12
 --- !u!114 &1139778820
 MonoBehaviour:
@@ -12269,6 +12273,9 @@ MonoBehaviour:
   _submitMethod: POST
   _timeoutSeconds: 10
   _logRequests: 0
+  _logConnectionSuccess: 1
+  _logConnectionFailure: 1
+  _logConnectionFailures: 0
 --- !u!1 &1143755603
 GameObject:
   m_ObjectHideFlags: 0
@@ -17690,8 +17697,10 @@ MonoBehaviour:
   - {fileID: 1150212033}
   - {fileID: 1474437576}
   _mainCamera: {fileID: 1531758390}
-  _cellSize: 0.72
+  _cellSize: 1
   _slotCellSize: 0.72
+  _slotCellScaleMultiplier: 0.9
+  _dragCellScaleMultiplier: 1.14
   _dragLift: 0.45
   _defaultSortingOrder: 3
   _dragSortingOrder: 20

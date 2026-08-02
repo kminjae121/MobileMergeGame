@@ -893,6 +893,9 @@ MonoBehaviour:
   _submitMethod: POST
   _timeoutSeconds: 10
   _logRequests: 0
+  _logConnectionSuccess: 1
+  _logConnectionFailure: 1
+  _logConnectionFailures: 0
 --- !u!1 &1700827337
 GameObject:
   m_ObjectHideFlags: 0

@@ -13,7 +13,12 @@ namespace _Code.Server
         [SerializeField] private string _submitMethod = "POST";
         [SerializeField, Min(1)] private int _timeoutSeconds = 10;
         [SerializeField] private bool _logRequests;
+        [SerializeField] private bool _logConnectionSuccess = true;
+        [SerializeField] private bool _logConnectionFailure = true;
         [SerializeField] private bool _logConnectionFailures;
+
+        private bool _hasLoggedConnectionSuccess;
+        private bool _hasLoggedConnectionFailure;
 
         public string PlayerId => PlayerIdProvider.PlayerId;
         public bool IsConfigured => !string.IsNullOrWhiteSpace(_baseUrl);
@@ -27,6 +32,7 @@ namespace _Code.Server
         {
             if (!IsConfigured)
             {
+                LogConnectionFailure("Server score client is not configured.");
                 failed?.Invoke();
                 return;
             }
@@ -37,7 +43,10 @@ namespace _Code.Server
         public void SubmitScore(int score)
         {
             if (!IsConfigured)
+            {
+                LogConnectionFailure("Server score client is not configured.");
                 return;
+            }
 
             StartCoroutine(SubmitScoreRoutine(Mathf.Max(0, score)));
         }
@@ -58,7 +67,20 @@ namespace _Code.Server
                 request.timeout = _timeoutSeconds;
                 request.SetRequestHeader("Accept", "application/json");
 
-                yield return request.SendWebRequest();
+                UnityWebRequestAsyncOperation operation;
+
+                try
+                {
+                    operation = request.SendWebRequest();
+                }
+                catch (InvalidOperationException exception)
+                {
+                    LogConnectionFailure($"Failed to start fetch request. {exception.Message}");
+                    failed?.Invoke();
+                    yield break;
+                }
+
+                yield return operation;
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
@@ -75,6 +97,7 @@ namespace _Code.Server
                     yield break;
                 }
 
+                LogConnectionSuccess();
                 completed?.Invoke(response.GetScore());
             }
         }
@@ -99,10 +122,27 @@ namespace _Code.Server
                 request.SetRequestHeader("Content-Type", "application/json");
                 request.SetRequestHeader("Accept", "application/json");
 
-                yield return request.SendWebRequest();
+                UnityWebRequestAsyncOperation operation;
+
+                try
+                {
+                    operation = request.SendWebRequest();
+                }
+                catch (InvalidOperationException exception)
+                {
+                    LogConnectionFailure($"Failed to start submit request. {exception.Message}");
+                    yield break;
+                }
+
+                yield return operation;
 
                 if (request.result != UnityWebRequest.Result.Success)
+                {
                     LogConnectionFailure($"Failed to submit score. {request.error}");
+                    yield break;
+                }
+
+                LogConnectionSuccess();
             }
         }
 
@@ -139,8 +179,23 @@ namespace _Code.Server
 
         private void LogConnectionFailure(string message)
         {
+            if (_logConnectionFailure && !_hasLoggedConnectionFailure)
+            {
+                _hasLoggedConnectionFailure = true;
+                Debug.Log("\uC11C\uBC84 \uC5F0\uACB0\uC548\uB428");
+            }
+
             if (_logConnectionFailures)
                 Debug.Log(message);
+        }
+
+        private void LogConnectionSuccess()
+        {
+            if (!_logConnectionSuccess || _hasLoggedConnectionSuccess)
+                return;
+
+            _hasLoggedConnectionSuccess = true;
+            Debug.Log("\uC11C\uBC84 \uC5F0\uACB0\uB428");
         }
 
         [Serializable]
