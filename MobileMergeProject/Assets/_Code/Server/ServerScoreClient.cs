@@ -30,6 +30,16 @@ namespace _Code.Server
 
         public void FetchScore(Action<int> completed, Action failed)
         {
+            FetchPlayerData(data => completed?.Invoke(data.MaxScore), failed);
+        }
+
+        public void FetchPlayerData(Action<PlayerData> completed)
+        {
+            FetchPlayerData(completed, null);
+        }
+
+        public void FetchPlayerData(Action<PlayerData> completed, Action failed)
+        {
             if (!IsConfigured)
             {
                 LogConnectionFailure("Server score client is not configured.");
@@ -37,10 +47,15 @@ namespace _Code.Server
                 return;
             }
 
-            StartCoroutine(FetchScoreRoutine(completed, failed));
+            StartCoroutine(FetchPlayerDataRoutine(completed, failed));
         }
 
         public void SubmitScore(int score)
+        {
+            SubmitPlayerData(score, 0);
+        }
+
+        public void SubmitPlayerData(int maxScore, int gold)
         {
             if (!IsConfigured)
             {
@@ -48,10 +63,10 @@ namespace _Code.Server
                 return;
             }
 
-            StartCoroutine(SubmitScoreRoutine(Mathf.Max(0, score)));
+            StartCoroutine(SubmitPlayerDataRoutine(Mathf.Max(0, maxScore), Mathf.Max(0, gold)));
         }
 
-        private System.Collections.IEnumerator FetchScoreRoutine(Action<int> completed, Action failed)
+        private System.Collections.IEnumerator FetchPlayerDataRoutine(Action<PlayerData> completed, Action failed)
         {
             if (!TryBuildUrl(_fetchScorePath, out string url))
             {
@@ -98,16 +113,16 @@ namespace _Code.Server
                 }
 
                 LogConnectionSuccess();
-                completed?.Invoke(response.GetScore());
+                completed?.Invoke(response.ToPlayerData());
             }
         }
 
-        private System.Collections.IEnumerator SubmitScoreRoutine(int score)
+        private System.Collections.IEnumerator SubmitPlayerDataRoutine(int maxScore, int gold)
         {
             if (!TryBuildUrl(_submitScorePath, out string url))
                 yield break;
 
-            PlayerScoreDto payload = new PlayerScoreDto(PlayerId, score);
+            PlayerScoreDto payload = new PlayerScoreDto(PlayerId, maxScore, gold);
             string json = JsonUtility.ToJson(payload);
             byte[] body = Encoding.UTF8.GetBytes(json);
 
@@ -198,6 +213,20 @@ namespace _Code.Server
             Debug.Log("\uC11C\uBC84 \uC5F0\uACB0\uB428");
         }
 
+        public readonly struct PlayerData
+        {
+            public PlayerData(int maxScore, int gold, string lastDailyGoldRewardDate)
+            {
+                MaxScore = Mathf.Max(0, maxScore);
+                Gold = Mathf.Max(0, gold);
+                LastDailyGoldRewardDate = lastDailyGoldRewardDate ?? string.Empty;
+            }
+
+            public int MaxScore { get; }
+            public int Gold { get; }
+            public string LastDailyGoldRewardDate { get; }
+        }
+
         [Serializable]
         private sealed class PlayerScoreDto
         {
@@ -205,18 +234,32 @@ namespace _Code.Server
             public int score;
             public int maxScore;
             public int bestScore;
+            public int gold;
+            public string lastDailyGoldRewardDate;
 
-            public PlayerScoreDto(string playerId, int score)
+            public PlayerScoreDto(string playerId, int maxScore, int gold)
             {
                 this.playerId = playerId;
-                this.score = score;
-                maxScore = score;
-                bestScore = score;
+                this.score = maxScore;
+                this.maxScore = maxScore;
+                bestScore = maxScore;
+                this.gold = gold;
+                lastDailyGoldRewardDate = string.Empty;
             }
 
             public int GetScore()
             {
                 return Mathf.Max(0, score, maxScore, bestScore);
+            }
+
+            public int GetGold()
+            {
+                return Mathf.Max(0, gold);
+            }
+
+            public PlayerData ToPlayerData()
+            {
+                return new PlayerData(GetScore(), GetGold(), lastDailyGoldRewardDate);
             }
         }
     }

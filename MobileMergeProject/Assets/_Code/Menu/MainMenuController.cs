@@ -18,6 +18,7 @@ namespace _Code.Menu
         [SerializeField] private JsonManager jsonManager;
         [SerializeField] private ServerScoreClient serverScoreClient;
         [SerializeField] private TextMeshProUGUI maxScoreTxt;
+        [SerializeField] private TextMeshProUGUI goldTxt;
 
         private void Awake()
         {
@@ -33,11 +34,12 @@ namespace _Code.Menu
             if (jsonManager != null)
             {
                 jsonManager.Load();
-                UpdateMaxScoreText(jsonManager.MaxScore);
+                jsonManager.ApplyDailyGoldRewardIfAvailable();
+                UpdatePlayerDataText();
             }
 
             if (serverScoreClient != null)
-                serverScoreClient.FetchScore(ApplyServerScore, ApplyLocalScoreOnly);
+                serverScoreClient.FetchPlayerData(ApplyServerPlayerData, ApplyLocalPlayerDataOnly);
         }
 
         private void OnDestroy()
@@ -49,32 +51,49 @@ namespace _Code.Menu
                 stageBtn.onClick.RemoveListener(OpenStageScene);
         }
 
-        private void ApplyServerScore(int serverScore)
+        private void ApplyServerPlayerData(ServerScoreClient.PlayerData serverData)
         {
             if (jsonManager == null)
             {
-                UpdateMaxScoreText(serverScore);
+                UpdateMaxScoreText(serverData.MaxScore);
+                UpdateGoldText(serverData.Gold);
                 return;
             }
 
             int localScore = jsonManager.MaxScore;
-            jsonManager.TrySaveMaxScore(serverScore);
-            UpdateMaxScoreText(jsonManager.MaxScore);
+            int localGold = jsonManager.Gold;
+            jsonManager.MergePlayerData(serverData.MaxScore, serverData.Gold, serverData.LastDailyGoldRewardDate);
+            UpdatePlayerDataText();
 
-            if (localScore > serverScore)
-                serverScoreClient.SubmitScore(localScore);
+            if (localScore > serverData.MaxScore || localGold > serverData.Gold)
+                serverScoreClient.SubmitPlayerData(jsonManager.MaxScore, jsonManager.Gold);
         }
 
-        private void ApplyLocalScoreOnly()
+        private void ApplyLocalPlayerDataOnly()
         {
             if (jsonManager != null)
-                UpdateMaxScoreText(jsonManager.MaxScore);
+                UpdatePlayerDataText();
+        }
+
+        private void UpdatePlayerDataText()
+        {
+            if (jsonManager == null)
+                return;
+
+            UpdateGoldText(jsonManager.Gold);
+            UpdateMaxScoreText(jsonManager.MaxScore);
         }
 
         private void UpdateMaxScoreText(int maxScore)
         {
             if (maxScoreTxt != null)
                 maxScoreTxt.text = $"\uCD5C\uB300\uC810\uC218 : {maxScore}";
+        }
+
+        private void UpdateGoldText(int gold)
+        {
+            if (goldTxt != null)
+                goldTxt.text = $"\uACE8\uB4DC : {gold}";
         }
 
         public void StartGame()

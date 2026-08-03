@@ -11,6 +11,14 @@ namespace _Code.Server
         {
             get
             {
+                string deviceId = SystemInfo.deviceUniqueIdentifier;
+                if (!string.IsNullOrWhiteSpace(deviceId) &&
+                    !string.Equals(deviceId, SystemInfo.unsupportedIdentifier, StringComparison.Ordinal))
+                {
+                    SetPlayerId(deviceId);
+                    return deviceId;
+                }
+
                 string playerId = PlayerPrefs.GetString(PlayerIdKey, string.Empty);
                 if (!string.IsNullOrWhiteSpace(playerId))
                     return playerId;

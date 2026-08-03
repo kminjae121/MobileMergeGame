@@ -35,8 +35,10 @@ namespace _Code.Manager
         private const string BestScoreLabel = "\uCD5C\uACE0\uC810\uC218 : ";
         private const string StageLabel = "\uC2A4\uD14C\uC774\uC9C0";
         private const string GoalLabel = "\uBAA9\uD45C";
+        private const int GoldScoreInterval = 100;
         private int _score;
         private int _maxScore;
+        private int _gold;
         private bool _isGameOver;
         private bool _isStageMode;
         private StageDefinition _stageDefinition;
@@ -82,7 +84,7 @@ namespace _Code.Manager
                 mouse.Initialize(blockField);
 
             SubscribePieces();
-            LoadMaxScore();
+            LoadPlayerData();
             UpdateScoreText();
             UpdateBestScoreText();
             gameOverView?.Hide();
@@ -235,9 +237,18 @@ namespace _Code.Manager
 
         private void AddScore(int value)
         {
+            int previousScore = _score;
             _score += value;
+            int earnedGold = Mathf.Max(0, _score / GoldScoreInterval - previousScore / GoldScoreInterval);
+
+            if (earnedGold > 0)
+                AddGold(earnedGold);
+
             UpdateScoreText();
-            TryUpdateMaxScore();
+            bool updatedMaxScore = TryUpdateMaxScore();
+
+            if (earnedGold > 0 && !updatedMaxScore)
+                SyncPlayerDataToServer();
         }
 
         private bool TryCompleteStage()
@@ -283,22 +294,24 @@ namespace _Code.Manager
                 bestScoreText.text = $"{BestScoreLabel}{_maxScore}";
         }
 
-        private void LoadMaxScore()
+        private void LoadPlayerData()
         {
             if (jsonManager != null)
             {
                 jsonManager.Load();
+                jsonManager.ApplyDailyGoldRewardIfAvailable();
                 _maxScore = jsonManager.MaxScore;
+                _gold = jsonManager.Gold;
             }
 
             if (serverScoreClient != null)
-                serverScoreClient.FetchScore(ApplyServerMaxScore, KeepLocalMaxScore);
+                serverScoreClient.FetchPlayerData(ApplyServerPlayerData, KeepLocalPlayerData);
         }
 
-        private void TryUpdateMaxScore()
+        private bool TryUpdateMaxScore()
         {
             if (_score <= _maxScore)
-                return;
+                return false;
 
             _maxScore = _score;
 
@@ -307,30 +320,53 @@ namespace _Code.Manager
 
             UpdateBestScoreText();
 
-            if (serverScoreClient != null)
-                serverScoreClient.SubmitScore(_maxScore);
+            SyncPlayerDataToServer();
+            return true;
         }
 
-        private void ApplyServerMaxScore(int serverScore)
+        private void ApplyServerPlayerData(ServerScoreClient.PlayerData serverData)
         {
-            if (serverScore > _maxScore)
+            int localScore = _maxScore;
+            int localGold = _gold;
+
+            if (jsonManager != null)
             {
-                _maxScore = serverScore;
-
-                if (jsonManager != null)
-                    jsonManager.SetMaxScore(_maxScore);
-
-                UpdateBestScoreText();
-                return;
+                jsonManager.MergePlayerData(serverData.MaxScore, serverData.Gold, serverData.LastDailyGoldRewardDate);
+                _maxScore = jsonManager.MaxScore;
+                _gold = jsonManager.Gold;
+            }
+            else
+            {
+                _maxScore = Mathf.Max(_maxScore, serverData.MaxScore);
+                _gold = Mathf.Max(_gold, serverData.Gold);
             }
 
-            if (_maxScore > serverScore && serverScoreClient != null)
-                serverScoreClient.SubmitScore(_maxScore);
+            UpdateBestScoreText();
+
+            if (localScore > serverData.MaxScore || localGold > serverData.Gold)
+                SyncPlayerDataToServer();
         }
 
-        private void KeepLocalMaxScore()
+        private void KeepLocalPlayerData()
         {
             UpdateBestScoreText();
+        }
+
+        private void AddGold(int amount)
+        {
+            if (amount <= 0)
+                return;
+
+            _gold = Mathf.Max(0, _gold + amount);
+
+            if (jsonManager != null)
+                jsonManager.SetGold(_gold);
+        }
+
+        private void SyncPlayerDataToServer()
+        {
+            if (serverScoreClient != null)
+                serverScoreClient.SubmitPlayerData(_maxScore, _gold);
         }
 
         private void EndGame()
