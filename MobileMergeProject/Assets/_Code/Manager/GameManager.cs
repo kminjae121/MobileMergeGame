@@ -359,6 +359,7 @@ namespace _Code.Manager
 
             _gold = Mathf.Max(0, _gold + amount);
 
+            
             if (jsonManager != null)
                 jsonManager.SetGold(_gold);
         }
