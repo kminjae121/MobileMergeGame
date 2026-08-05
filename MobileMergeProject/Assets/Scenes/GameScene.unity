@@ -12187,6 +12187,7 @@ MonoBehaviour:
   scoreText: {fileID: 1372210434}
   bestScoreText: {fileID: 1876570990}
   messageText: {fileID: 351082194}
+  resetSceneName: MainScene
   swipeMinDistance: 75
   enableKeyboardInput: 1
 --- !u!114 &1139778817
@@ -12270,6 +12271,7 @@ MonoBehaviour:
   _baseUrl: http://192.168.45.28:5253
   _fetchScorePath: /players/{playerId}/score
   _submitScorePath: /players/{playerId}/score
+  _validatePlacementPath: /players/{playerId}/score/validate-placement
   _submitMethod: POST
   _timeoutSeconds: 10
   _logRequests: 0

@@ -676,6 +676,7 @@ MonoBehaviour:
   _baseUrl: http://192.168.45.28:5253
   _fetchScorePath: /players/{playerId}/score
   _submitScorePath: /players/{playerId}/score
+  _validatePlacementPath: /players/{playerId}/score/validate-placement
   _submitMethod: POST
   _timeoutSeconds: 10
   _logRequests: 0

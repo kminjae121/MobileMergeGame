@@ -70,6 +70,12 @@ namespace _Code.Manager
             Save();
         }
 
+        public void ResetSaveData()
+        {
+            _saveData = new ScoreSaveData();
+            Save();
+        }
+
         public void AddGold(int amount)
         {
             if (amount <= 0)

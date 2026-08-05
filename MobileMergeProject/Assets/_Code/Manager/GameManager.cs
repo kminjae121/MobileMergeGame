@@ -7,6 +7,7 @@ using _Code.Stage;
 using Code.Core.Events.Bus;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using MouseView = _Code.Mouse.Mouse;
 
 namespace _Code.Manager
@@ -26,10 +27,13 @@ namespace _Code.Manager
         [SerializeField] private TextMeshProUGUI scoreText;
         [SerializeField] private TextMeshProUGUI bestScoreText;
         [SerializeField] private TextMeshProUGUI messageText;
+        [SerializeField] private string resetSceneName = "MainScene";
         [SerializeField, Min(20f)] private float swipeMinDistance = 75f;
         [SerializeField] private bool enableKeyboardInput = true;
 
         private readonly List<Vector3> _clearedBlockPositions = new List<Vector3>(36);
+        private readonly List<Vector2Int> _occupiedCellsBeforePlacement = new List<Vector2Int>(36);
+        private readonly List<Vector2Int> _releasedBlockCells = new List<Vector2Int>(9);
         private readonly SwipeInputReader _swipeInputReader = new SwipeInputReader();
         private const string ScoreSuffix = "\uC810";
         private const string BestScoreLabel = "\uCD5C\uACE0\uC810\uC218 : ";
@@ -41,6 +45,7 @@ namespace _Code.Manager
         private int _gold;
         private bool _isGameOver;
         private bool _isStageMode;
+        private bool _suppressScoreSync;
         private StageDefinition _stageDefinition;
 
         private void Awake()
@@ -139,8 +144,15 @@ namespace _Code.Manager
                 return;
             }
 
+            int scoreBeforePlacement = _score;
+            int goldBeforePlacement = _gold;
+            CaptureOccupiedCells(_occupiedCellsBeforePlacement);
+            CaptureBlockCells(piece, _releasedBlockCells);
+
             piece.SnapTo(blockField.GetWorldPosition(anchor));
             blockField.Install(piece, anchor);
+
+            _suppressScoreSync = true;
             AddScore(piece.CellCount * 10);
 
             int clearedLines = blockField.ClearCompletedLines(_clearedBlockPositions);
@@ -149,6 +161,9 @@ namespace _Code.Manager
                 AddScore(clearedLines * 100 + clearedLines * clearedLines * 50);
                 PlayLineClearEffects(clearedLines, _clearedBlockPositions);
             }
+            _suppressScoreSync = false;
+
+            ValidatePlacementScore(scoreBeforePlacement, _score, goldBeforePlacement, _gold, _occupiedCellsBeforePlacement, _releasedBlockCells);
 
             piece.MarkPlaced();
 
@@ -247,7 +262,7 @@ namespace _Code.Manager
             UpdateScoreText();
             bool updatedMaxScore = TryUpdateMaxScore();
 
-            if (earnedGold > 0 && !updatedMaxScore)
+            if (earnedGold > 0 && !updatedMaxScore && !_suppressScoreSync)
                 SyncPlayerDataToServer();
         }
 
@@ -320,7 +335,9 @@ namespace _Code.Manager
 
             UpdateBestScoreText();
 
-            SyncPlayerDataToServer();
+            if (!_suppressScoreSync)
+                SyncPlayerDataToServer();
+
             return true;
         }
 
@@ -368,6 +385,98 @@ namespace _Code.Manager
         {
             if (serverScoreClient != null)
                 serverScoreClient.SubmitPlayerData(_maxScore, _gold);
+        }
+
+        private void ValidatePlacementScore(
+            int scoreBefore,
+            int scoreAfter,
+            int goldBefore,
+            int goldAfter,
+            IReadOnlyList<Vector2Int> occupiedCellsBeforePlacement,
+            IReadOnlyList<Vector2Int> blockCells)
+        {
+            if (serverScoreClient == null)
+                return;
+
+            serverScoreClient.ValidatePlacementScore(
+                scoreBefore,
+                scoreAfter,
+                _maxScore,
+                goldBefore,
+                goldAfter,
+                blockField.Width,
+                blockField.Height,
+                occupiedCellsBeforePlacement,
+                blockCells,
+                ApplyPlacementValidationResult);
+        }
+
+        private void ApplyPlacementValidationResult(ServerScoreClient.PlacementValidationResult result)
+        {
+            if (result.CheatDetected)
+            {
+                HandleCheatDetected();
+                return;
+            }
+
+            if (!result.HasPlayerData)
+                return;
+
+            if (jsonManager != null)
+            {
+                jsonManager.MergePlayerData(
+                    result.PlayerData.MaxScore,
+                    result.PlayerData.Gold,
+                    result.PlayerData.LastDailyGoldRewardDate);
+
+                _maxScore = jsonManager.MaxScore;
+                _gold = jsonManager.Gold;
+            }
+            else
+            {
+                _maxScore = Mathf.Max(_maxScore, result.PlayerData.MaxScore);
+                _gold = Mathf.Max(_gold, result.PlayerData.Gold);
+            }
+
+            UpdateBestScoreText();
+        }
+
+        private void HandleCheatDetected()
+        {
+            Debug.Log("\uD575 \uAC10\uC9C0: \uACC4\uC815 \uB370\uC774\uD130\uB97C \uCD08\uAE30\uD654\uD569\uB2C8\uB2E4.");
+
+            _isGameOver = true;
+            _score = 0;
+            _maxScore = 0;
+            _gold = 0;
+
+            if (jsonManager != null)
+                jsonManager.ResetSaveData();
+
+            string sceneName = string.IsNullOrWhiteSpace(resetSceneName)
+                ? SceneManager.GetActiveScene().name
+                : resetSceneName;
+
+            SceneManager.LoadScene(sceneName);
+        }
+
+        private void CaptureOccupiedCells(ICollection<Vector2Int> results)
+        {
+            results.Clear();
+
+            foreach (_Code.Field.Field field in blockField.Fields)
+            {
+                if (!field.IsEmpty)
+                    results.Add(field.Point);
+            }
+        }
+
+        private static void CaptureBlockCells(BlockPiece piece, ICollection<Vector2Int> results)
+        {
+            results.Clear();
+
+            foreach (Vector2Int cell in piece.Cells)
+                results.Add(cell);
         }
 
         private void EndGame()
