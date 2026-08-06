@@ -3,17 +3,15 @@ using _Code.Block;
 using _Code.Effects;
 using _Code.Field;
 using _Code.Server;
-using _Code.Stage;
-using Code.Core.Events.Bus;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using MouseView = _Code.Mouse.Mouse;
 
 namespace _Code.Manager
 {
     public class GameManager : MonoBehaviour
     {
+        [Header("Scene References")]
         [SerializeField] private BlockField blockField;
         [SerializeField] private RandomBlockManager randomBlockManager;
         [SerializeField] private BlockPiece[] pieces;
@@ -31,22 +29,15 @@ namespace _Code.Manager
         [SerializeField, Min(20f)] private float swipeMinDistance = 75f;
         [SerializeField] private bool enableKeyboardInput = true;
 
+        [Header("Responsibility Controllers")]
+        [SerializeField] private PlayerProgressController playerProgressController;
+        [SerializeField] private StageModeController stageModeController;
+        [SerializeField] private BoardShiftController boardShiftController;
+        [SerializeField] private LineClearEffectPlayer lineClearEffectPlayer;
+        [SerializeField] private PlacementScoreGuard placementScoreGuard;
+
         private readonly List<Vector3> _clearedBlockPositions = new List<Vector3>(36);
-        private readonly List<Vector2Int> _occupiedCellsBeforePlacement = new List<Vector2Int>(36);
-        private readonly List<Vector2Int> _releasedBlockCells = new List<Vector2Int>(9);
-        private readonly SwipeInputReader _swipeInputReader = new SwipeInputReader();
-        private const string ScoreSuffix = "\uC810";
-        private const string BestScoreLabel = "\uCD5C\uACE0\uC810\uC218 : ";
-        private const string StageLabel = "\uC2A4\uD14C\uC774\uC9C0";
-        private const string GoalLabel = "\uBAA9\uD45C";
-        private const int GoldScoreInterval = 100;
-        private int _score;
-        private int _maxScore;
-        private int _gold;
         private bool _isGameOver;
-        private bool _isStageMode;
-        private bool _suppressScoreSync;
-        private StageDefinition _stageDefinition;
 
         private void Awake()
         {
@@ -56,42 +47,26 @@ namespace _Code.Manager
                 return;
             }
 
-            if (randomBlockManager == null)
-                randomBlockManager = GetComponent<RandomBlockManager>();
-
-            if (serverScoreClient == null)
-                serverScoreClient = GetComponent<ServerScoreClient>();
-
-            if (hapticFeedback == null)
-                hapticFeedback = GetComponent<HapticFeedback>();
-
-            if (placementPreview == null)
-                placementPreview = GetComponent<BlockPlacementPreview>();
-
-            if (placementPreview == null)
-                placementPreview = gameObject.AddComponent<BlockPlacementPreview>();
-
-            if (lineClearParticleEffect == null)
-                lineClearParticleEffect = GetComponentInChildren<LineClearPawParticleEffect>(true);
+            ResolveSceneReferences();
+            ResolveControllers();
+            ConfigureControllers();
         }
 
         private void Start()
         {
-            if (randomBlockManager == null)
+            if (randomBlockManager == null || playerProgressController == null || stageModeController == null)
                 return;
 
             blockField.Rebuild();
             blockField.ClearAll();
-            InitializeStageMode();
+            stageModeController.Initialize(blockField, gameObject);
 
             randomBlockManager.Initialize(pieces);
             if (mouse != null)
                 mouse.Initialize(blockField);
 
             SubscribePieces();
-            LoadPlayerData();
-            UpdateScoreText();
-            UpdateBestScoreText();
+            playerProgressController.Initialize(stageModeController.IsStageMode, stageModeController.TargetScore);
             gameOverView?.Hide();
 
             if (!randomBlockManager.GiveNewSet(blockField))
@@ -100,7 +75,7 @@ namespace _Code.Manager
                 return;
             }
 
-            SetMessage(GetStartMessage());
+            SetMessage(stageModeController.GetStartMessage());
         }
 
         private void Update()
@@ -108,13 +83,8 @@ namespace _Code.Manager
             if (_isGameOver)
                 return;
 
-            if (BlockPiece.IsAnyDragging)
-            {
-                _swipeInputReader.Cancel();
-                return;
-            }
-
-            if (_swipeInputReader.TryReadDirection(swipeMinDistance, enableKeyboardInput, out Vector2Int direction))
+            if (boardShiftController != null &&
+                boardShiftController.TryReadDirection(BlockPiece.IsAnyDragging, out Vector2Int direction))
                 ShiftBoard(direction);
         }
 
@@ -126,6 +96,65 @@ namespace _Code.Manager
         private void OnDestroy()
         {
             UnsubscribePieces();
+        }
+
+        private void ResolveSceneReferences()
+        {
+            if (randomBlockManager == null)
+                randomBlockManager = GetComponent<RandomBlockManager>();
+
+            if (jsonManager == null)
+                jsonManager = GetComponent<JsonManager>();
+
+            if (serverScoreClient == null)
+                serverScoreClient = GetComponent<ServerScoreClient>();
+
+            if (hapticFeedback == null)
+                hapticFeedback = GetComponent<HapticFeedback>();
+
+            if (gameOverView == null)
+                gameOverView = GetComponentInChildren<GameOverView>(true);
+
+            if (placementPreview == null)
+                placementPreview = GetComponent<BlockPlacementPreview>();
+
+            if (placementPreview == null)
+                placementPreview = gameObject.AddComponent<BlockPlacementPreview>();
+
+            if (lineClearParticleEffect == null)
+                lineClearParticleEffect = GetComponentInChildren<LineClearPawParticleEffect>(true);
+        }
+
+        private void ResolveControllers()
+        {
+            if (playerProgressController == null)
+                playerProgressController = GetOrAdd<PlayerProgressController>();
+
+            if (stageModeController == null)
+                stageModeController = GetOrAdd<StageModeController>();
+
+            if (boardShiftController == null)
+                boardShiftController = GetOrAdd<BoardShiftController>();
+
+            if (lineClearEffectPlayer == null)
+                lineClearEffectPlayer = GetOrAdd<LineClearEffectPlayer>();
+
+            if (placementScoreGuard == null)
+                placementScoreGuard = GetOrAdd<PlacementScoreGuard>();
+        }
+
+        private void ConfigureControllers()
+        {
+            playerProgressController.Configure(jsonManager, serverScoreClient, scoreText, bestScoreText);
+            boardShiftController.Configure(blockField, randomBlockManager, mouse, swipeMinDistance, enableKeyboardInput);
+            lineClearEffectPlayer.Configure(hapticFeedback, lineClearParticleEffect);
+            placementScoreGuard.Configure(jsonManager, serverScoreClient, resetSceneName);
+        }
+
+        private T GetOrAdd<T>() where T : Component
+        {
+            T component = GetComponent<T>();
+            return component != null ? component : gameObject.AddComponent<T>();
         }
 
         private void HandlePieceReleased(BlockPiece piece)
@@ -144,26 +173,33 @@ namespace _Code.Manager
                 return;
             }
 
-            int scoreBeforePlacement = _score;
-            int goldBeforePlacement = _gold;
-            CaptureOccupiedCells(_occupiedCellsBeforePlacement);
-            CaptureBlockCells(piece, _releasedBlockCells);
+            PlacementScoreGuard.PlacementScoreSnapshot snapshot = default;
+            bool hasValidationSnapshot = placementScoreGuard != null;
+
+            if (hasValidationSnapshot)
+                snapshot = placementScoreGuard.Capture(blockField, piece, playerProgressController.Score, playerProgressController.Gold);
 
             piece.SnapTo(blockField.GetWorldPosition(anchor));
             blockField.Install(piece, anchor);
 
-            _suppressScoreSync = true;
-            AddScore(piece.CellCount * 10);
+            playerProgressController.AddScore(piece.CellCount * 10, false);
 
             int clearedLines = blockField.ClearCompletedLines(_clearedBlockPositions);
             if (clearedLines > 0)
             {
-                AddScore(clearedLines * 100 + clearedLines * clearedLines * 50);
-                PlayLineClearEffects(clearedLines, _clearedBlockPositions);
+                playerProgressController.AddScore(clearedLines * 100 + clearedLines * clearedLines * 50, false);
+                lineClearEffectPlayer.Play(clearedLines, _clearedBlockPositions);
             }
-            _suppressScoreSync = false;
 
-            ValidatePlacementScore(scoreBeforePlacement, _score, goldBeforePlacement, _gold, _occupiedCellsBeforePlacement, _releasedBlockCells);
+            if (hasValidationSnapshot)
+            {
+                placementScoreGuard.Validate(
+                    snapshot,
+                    playerProgressController.Score,
+                    playerProgressController.MaxScore,
+                    playerProgressController.Gold,
+                    playerProgressController.ApplyServerData);
+            }
 
             piece.MarkPlaced();
 
@@ -187,55 +223,38 @@ namespace _Code.Manager
 
         private void ShiftBoard(Vector2Int direction)
         {
-            if (randomBlockManager == null)
+            if (boardShiftController == null ||
+                !boardShiftController.TryShift(direction, _clearedBlockPositions, out BoardShiftController.BoardShiftResult result))
                 return;
 
-            if (mouse != null && !mouse.TryMove(direction, blockField))
-                return;
-
-            Debug.Log("CatBlast");
-
-            bool moved = blockField.Compact(direction);
-            int clearedLines = blockField.ClearCompletedLines(_clearedBlockPositions);
-
-            if (clearedLines > 0)
+            if (result.ClearedLines > 0)
             {
-                AddScore(clearedLines * 90 + clearedLines * clearedLines * 40);
-                PlayLineClearEffects(clearedLines, _clearedBlockPositions);
+                playerProgressController.AddScore(result.ClearedLines * 90 + result.ClearedLines * result.ClearedLines * 40, true);
+                lineClearEffectPlayer.Play(result.ClearedLines, _clearedBlockPositions);
             }
 
             if (TryCompleteStage())
                 return;
 
-            if (!randomBlockManager.CanPlaceAllRemainingPieces(blockField))
+            if (!result.CanPlaceRemainingPieces)
             {
                 EndGame();
                 return;
             }
 
-            SetMessage(moved || clearedLines > 0 ? "Shift" : string.Empty);
-        }
-
-        private void InitializeStageMode()
-        {
-            _isStageMode = StageRunContext.TryGetSelectedStage(out _stageDefinition);
-
-            if (!_isStageMode)
-                return;
-
-            int groupId = 10000 + _stageDefinition.Number * 100;
-
-            foreach (Vector2Int point in _stageDefinition.StartingCells)
-            {
-                if (blockField.TryGetField(point, out _Code.Field.Field field))
-                    field.SetObject(gameObject, Color.white, BlockBlastSpriteLibrary.GetRandomCatBlockSprite(), groupId++);
-            }
+            SetMessage(result.HasVisibleChange ? "Shift" : string.Empty);
         }
 
         private void SubscribePieces()
         {
+            if (pieces == null)
+                return;
+
             foreach (BlockPiece piece in pieces)
-                piece.Released += HandlePieceReleased;
+            {
+                if (piece != null)
+                    piece.Released += HandlePieceReleased;
+            }
         }
 
         private void UnsubscribePieces()
@@ -250,25 +269,9 @@ namespace _Code.Manager
             }
         }
 
-        private void AddScore(int value)
-        {
-            int previousScore = _score;
-            _score += value;
-            int earnedGold = Mathf.Max(0, _score / GoldScoreInterval - previousScore / GoldScoreInterval);
-
-            if (earnedGold > 0)
-                AddGold(earnedGold);
-
-            UpdateScoreText();
-            bool updatedMaxScore = TryUpdateMaxScore();
-
-            if (earnedGold > 0 && !updatedMaxScore && !_suppressScoreSync)
-                SyncPlayerDataToServer();
-        }
-
         private bool TryCompleteStage()
         {
-            if (!_isStageMode || _isGameOver || _score < _stageDefinition.TargetScore)
+            if (_isGameOver || stageModeController == null || !stageModeController.IsComplete(playerProgressController.Score))
                 return false;
 
             CompleteStage();
@@ -279,215 +282,22 @@ namespace _Code.Manager
         {
             _isGameOver = true;
             placementPreview?.Hide();
-            TryUpdateMaxScore();
-            SetMessage($"{StageLabel} {_stageDefinition.Number} \uD074\uB9AC\uC5B4!");
+            playerProgressController.TryUpdateMaxScore(true);
+            SetMessage(stageModeController.GetClearMessage());
 
             if (gameOverView != null)
-                gameOverView.ShowStageClear(_score, _maxScore);
-        }
-
-        private void PlayLineClearEffects(int clearedLines, IReadOnlyList<Vector3> clearedBlockPositions)
-        {
-            Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.2f));
-
-            if (lineClearParticleEffect != null)
-                lineClearParticleEffect.PlayAtPositions(clearedBlockPositions, clearedLines);
-
-            if (hapticFeedback != null)
-                hapticFeedback.PlayLineClear();
-        }
-
-        private void UpdateScoreText()
-        {
-            if (scoreText != null)
-                scoreText.text = _isStageMode ? $"{_score}/{_stageDefinition.TargetScore}{ScoreSuffix}" : $"{_score}{ScoreSuffix}";
-        }
-
-        private void UpdateBestScoreText()
-        {
-            if (bestScoreText != null)
-                bestScoreText.text = $"{BestScoreLabel}{_maxScore}";
-        }
-
-        private void LoadPlayerData()
-        {
-            if (jsonManager != null)
-            {
-                jsonManager.Load();
-                jsonManager.ApplyDailyGoldRewardIfAvailable();
-                _maxScore = jsonManager.MaxScore;
-                _gold = jsonManager.Gold;
-            }
-
-            if (serverScoreClient != null)
-                serverScoreClient.FetchPlayerData(ApplyServerPlayerData, KeepLocalPlayerData);
-        }
-
-        private bool TryUpdateMaxScore()
-        {
-            if (_score <= _maxScore)
-                return false;
-
-            _maxScore = _score;
-
-            if (jsonManager != null)
-                jsonManager.SetMaxScore(_maxScore);
-
-            UpdateBestScoreText();
-
-            if (!_suppressScoreSync)
-                SyncPlayerDataToServer();
-
-            return true;
-        }
-
-        private void ApplyServerPlayerData(ServerScoreClient.PlayerData serverData)
-        {
-            int localScore = _maxScore;
-            int localGold = _gold;
-
-            if (jsonManager != null)
-            {
-                jsonManager.MergePlayerData(serverData.MaxScore, serverData.Gold, serverData.LastDailyGoldRewardDate);
-                _maxScore = jsonManager.MaxScore;
-                _gold = jsonManager.Gold;
-            }
-            else
-            {
-                _maxScore = Mathf.Max(_maxScore, serverData.MaxScore);
-                _gold = Mathf.Max(_gold, serverData.Gold);
-            }
-
-            UpdateBestScoreText();
-
-            if (localScore > serverData.MaxScore || localGold > serverData.Gold)
-                SyncPlayerDataToServer();
-        }
-
-        private void KeepLocalPlayerData()
-        {
-            UpdateBestScoreText();
-        }
-
-        private void AddGold(int amount)
-        {
-            if (amount <= 0)
-                return;
-
-            _gold = Mathf.Max(0, _gold + amount);
-
-            
-            if (jsonManager != null)
-                jsonManager.SetGold(_gold);
-        }
-
-        private void SyncPlayerDataToServer()
-        {
-            if (serverScoreClient != null)
-                serverScoreClient.SubmitPlayerData(_maxScore, _gold);
-        }
-
-        private void ValidatePlacementScore(
-            int scoreBefore,
-            int scoreAfter,
-            int goldBefore,
-            int goldAfter,
-            IReadOnlyList<Vector2Int> occupiedCellsBeforePlacement,
-            IReadOnlyList<Vector2Int> blockCells)
-        {
-            if (serverScoreClient == null)
-                return;
-
-            serverScoreClient.ValidatePlacementScore(
-                scoreBefore,
-                scoreAfter,
-                _maxScore,
-                goldBefore,
-                goldAfter,
-                blockField.Width,
-                blockField.Height,
-                occupiedCellsBeforePlacement,
-                blockCells,
-                ApplyPlacementValidationResult);
-        }
-
-        private void ApplyPlacementValidationResult(ServerScoreClient.PlacementValidationResult result)
-        {
-            if (result.CheatDetected)
-            {
-                HandleCheatDetected();
-                return;
-            }
-
-            if (!result.HasPlayerData)
-                return;
-
-            if (jsonManager != null)
-            {
-                jsonManager.MergePlayerData(
-                    result.PlayerData.MaxScore,
-                    result.PlayerData.Gold,
-                    result.PlayerData.LastDailyGoldRewardDate);
-
-                _maxScore = jsonManager.MaxScore;
-                _gold = jsonManager.Gold;
-            }
-            else
-            {
-                _maxScore = Mathf.Max(_maxScore, result.PlayerData.MaxScore);
-                _gold = Mathf.Max(_gold, result.PlayerData.Gold);
-            }
-
-            UpdateBestScoreText();
-        }
-
-        private void HandleCheatDetected()
-        {
-            Debug.Log("\uD575 \uAC10\uC9C0: \uACC4\uC815 \uB370\uC774\uD130\uB97C \uCD08\uAE30\uD654\uD569\uB2C8\uB2E4.");
-
-            _isGameOver = true;
-            _score = 0;
-            _maxScore = 0;
-            _gold = 0;
-
-            if (jsonManager != null)
-                jsonManager.ResetSaveData();
-
-            string sceneName = string.IsNullOrWhiteSpace(resetSceneName)
-                ? SceneManager.GetActiveScene().name
-                : resetSceneName;
-
-            SceneManager.LoadScene(sceneName);
-        }
-
-        private void CaptureOccupiedCells(ICollection<Vector2Int> results)
-        {
-            results.Clear();
-
-            foreach (_Code.Field.Field field in blockField.Fields)
-            {
-                if (!field.IsEmpty)
-                    results.Add(field.Point);
-            }
-        }
-
-        private static void CaptureBlockCells(BlockPiece piece, ICollection<Vector2Int> results)
-        {
-            results.Clear();
-
-            foreach (Vector2Int cell in piece.Cells)
-                results.Add(cell);
+                gameOverView.ShowStageClear(playerProgressController.Score, playerProgressController.MaxScore);
         }
 
         private void EndGame()
         {
             _isGameOver = true;
             placementPreview?.Hide();
-            TryUpdateMaxScore();
+            playerProgressController.TryUpdateMaxScore(true);
             SetMessage(string.Empty);
 
             if (gameOverView != null)
-                gameOverView.Show(_score, _maxScore);
+                gameOverView.Show(playerProgressController.Score, playerProgressController.MaxScore);
             else
                 SetMessage("Game Over");
         }
@@ -511,124 +321,6 @@ namespace _Code.Manager
         {
             if (messageText != null)
                 messageText.text = message;
-        }
-
-        private string GetStartMessage()
-        {
-            if (!_isStageMode)
-                return string.Empty;
-
-            return $"{StageLabel} {_stageDefinition.Number} / {GoalLabel} {_stageDefinition.TargetScore}{ScoreSuffix}";
-        }
-
-        private sealed class SwipeInputReader
-        {
-            private Vector2 _startPosition;
-            private bool _isTracking;
-
-            public bool TryReadDirection(float minDistance, bool enableKeyboardInput, out Vector2Int direction)
-            {
-                if (enableKeyboardInput && TryReadKeyboard(out direction))
-                    return true;
-
-                if (Input.touchCount > 0)
-                    return TryReadTouch(minDistance, out direction);
-
-                return TryReadMouse(minDistance, out direction);
-            }
-
-            public void Cancel()
-            {
-                _isTracking = false;
-            }
-
-            private bool TryReadTouch(float minDistance, out Vector2Int direction)
-            {
-                direction = Vector2Int.zero;
-                Touch touch = Input.GetTouch(0);
-
-                if (touch.phase == TouchPhase.Began)
-                {
-                    _startPosition = touch.position;
-                    _isTracking = true;
-                    return false;
-                }
-
-                if (!_isTracking)
-                    return false;
-
-                if (touch.phase != TouchPhase.Ended && touch.phase != TouchPhase.Canceled)
-                    return false;
-
-                Vector2 delta = touch.position - _startPosition;
-                _isTracking = false;
-                return TryConvertDelta(delta, minDistance, out direction);
-            }
-
-            private bool TryReadMouse(float minDistance, out Vector2Int direction)
-            {
-                direction = Vector2Int.zero;
-
-                if (Input.GetMouseButtonDown(0))
-                {
-                    _startPosition = Input.mousePosition;
-                    _isTracking = true;
-                    return false;
-                }
-
-                if (!_isTracking || !Input.GetMouseButtonUp(0))
-                    return false;
-
-                Vector2 delta = (Vector2)Input.mousePosition - _startPosition;
-                _isTracking = false;
-                return TryConvertDelta(delta, minDistance, out direction);
-            }
-
-            private static bool TryReadKeyboard(out Vector2Int direction)
-            {
-                if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
-                {
-                    direction = Vector2Int.up;
-                    return true;
-                }
-
-                if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
-                {
-                    direction = Vector2Int.down;
-                    return true;
-                }
-
-                if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
-                {
-                    direction = Vector2Int.left;
-                    return true;
-                }
-
-                if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
-                {
-                    direction = Vector2Int.right;
-                    return true;
-                }
-
-                direction = Vector2Int.zero;
-                return false;
-            }
-
-            private static bool TryConvertDelta(Vector2 delta, float minDistance, out Vector2Int direction)
-            {
-                if (delta.sqrMagnitude < minDistance * minDistance)
-                {
-                    direction = Vector2Int.zero;
-                    return false;
-                }
-
-                if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
-                    direction = delta.x > 0f ? Vector2Int.right : Vector2Int.left;
-                else
-                    direction = delta.y > 0f ? Vector2Int.up : Vector2Int.down;
-
-                return true;
-            }
         }
     }
 }

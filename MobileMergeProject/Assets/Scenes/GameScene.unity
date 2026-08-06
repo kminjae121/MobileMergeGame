@@ -12124,6 +12124,11 @@ GameObject:
   - component: {fileID: 1139778819}
   - component: {fileID: 1139778820}
   - component: {fileID: 1139778821}
+  - component: {fileID: 1139778822}
+  - component: {fileID: 1139778823}
+  - component: {fileID: 1139778824}
+  - component: {fileID: 1139778825}
+  - component: {fileID: 1139778826}
   m_Layer: 0
   m_Name: BlockBlastManager
   m_TagString: Untagged
@@ -12190,6 +12195,11 @@ MonoBehaviour:
   resetSceneName: MainScene
   swipeMinDistance: 75
   enableKeyboardInput: 1
+  playerProgressController: {fileID: 1139778822}
+  stageModeController: {fileID: 1139778823}
+  boardShiftController: {fileID: 1139778824}
+  lineClearEffectPlayer: {fileID: 1139778825}
+  placementScoreGuard: {fileID: 1139778826}
 --- !u!114 &1139778817
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12278,6 +12288,80 @@ MonoBehaviour:
   _logConnectionSuccess: 1
   _logConnectionFailure: 1
   _logConnectionFailures: 0
+--- !u!114 &1139778822
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1139778812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70e5868d206a4b35acd0e71cdf36616e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  jsonManager: {fileID: 1139778814}
+  serverScoreClient: {fileID: 1139778821}
+  scoreText: {fileID: 1372210434}
+  bestScoreText: {fileID: 1876570990}
+--- !u!114 &1139778823
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1139778812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5604493210824466ad39aa7ca8eeac67, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1139778824
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1139778812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bf3986f49bb4f3498cf5d62efee3246, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blockField: {fileID: 728511736}
+  randomBlockManager: {fileID: 1139778817}
+  mouse: {fileID: 340847340}
+  swipeMinDistance: 75
+  enableKeyboardInput: 1
+--- !u!114 &1139778825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1139778812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b394ff7f20b4bf8bb48c4bb8fd4d488, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hapticFeedback: {fileID: 1139778818}
+  lineClearParticleEffect: {fileID: 1139778820}
+--- !u!114 &1139778826
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1139778812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bb8d70aef8b4c1ea3cc2a65dcf12536, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  jsonManager: {fileID: 1139778814}
+  serverScoreClient: {fileID: 1139778821}
+  resetSceneName: MainScene
 --- !u!1 &1143755603
 GameObject:
   m_ObjectHideFlags: 0
