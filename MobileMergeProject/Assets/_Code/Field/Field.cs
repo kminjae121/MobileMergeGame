@@ -15,6 +15,8 @@ namespace _Code.Field
         private Sprite _currentSprite;
         private int _currentGroupId = -1;
 
+        private int name;
+
         public bool IsHaveObject => _isHaveObject;
         public bool IsEmpty => !_isHaveObject;
         public GameObject CurrentObject => _thisObject;
