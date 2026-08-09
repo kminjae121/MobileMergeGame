@@ -23,6 +23,7 @@ namespace _Code.Server
         private bool _hasLoggedConnectionFailure;
 
         public string PlayerId => PlayerIdProvider.PlayerId;
+        public string BaseUrl => _baseUrl;
         public bool IsConfigured => !string.IsNullOrWhiteSpace(_baseUrl);
 
         public void FetchScore(Action<int> completed)

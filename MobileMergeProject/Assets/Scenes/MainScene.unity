@@ -822,6 +822,9 @@ GameObject:
   - component: {fileID: 1678449949}
   - component: {fileID: 1678449950}
   - component: {fileID: 1678449951}
+  - component: {fileID: 1678449952}
+  - component: {fileID: 1678449953}
+  - component: {fileID: 1678449954}
   m_Layer: 0
   m_Name: MainMenuController
   m_TagString: Untagged
@@ -862,6 +865,7 @@ MonoBehaviour:
   stageBtn: {fileID: 2100001003}
   jsonManager: {fileID: 1678449950}
   serverScoreClient: {fileID: 1678449951}
+  googleLoginManager: {fileID: 1678449953}
   maxScoreTxt: {fileID: 2113876899}
   goldTxt: {fileID: 5100001003}
 --- !u!114 &1678449950
@@ -899,6 +903,54 @@ MonoBehaviour:
   _logConnectionSuccess: 1
   _logConnectionFailure: 1
   _logConnectionFailures: 0
+--- !u!114 &1678449952
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1678449947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d06f2c56464c4da7bb50ab19fd5546a1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _baseUrl: 
+  _googleLoginPath: /auth/google
+  _serverScoreClient: {fileID: 1678449951}
+  _jsonManager: {fileID: 1678449950}
+  _timeoutSeconds: 10
+  _logRequests: 0
+--- !u!114 &1678449953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1678449947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26e92f71967d4d69922d13686ca0780b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  authClient: {fileID: 1678449952}
+  jsonManager: {fileID: 1678449950}
+  serverScoreClient: {fileID: 1678449951}
+  statusText: {fileID: 0}
+--- !u!114 &1678449954
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1678449947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7711242d4a04d58ae5c0346921823dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  loginManager: {fileID: 1678449953}
+  webClientId: 
 --- !u!1 &1700827337
 GameObject:
   m_ObjectHideFlags: 0

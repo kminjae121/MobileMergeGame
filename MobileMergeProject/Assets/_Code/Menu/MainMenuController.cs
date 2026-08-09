@@ -1,4 +1,5 @@
 using System;
+using _Code.Auth;
 using _Code.Manager;
 using _Code.Server;
 using _Code.Stage;
@@ -17,6 +18,7 @@ namespace _Code.Menu
         [SerializeField] private Button stageBtn;
         [SerializeField] private JsonManager jsonManager;
         [SerializeField] private ServerScoreClient serverScoreClient;
+        [SerializeField] private GoogleLoginManager googleLoginManager;
         [SerializeField] private TextMeshProUGUI maxScoreTxt;
         [SerializeField] private TextMeshProUGUI goldTxt;
 
@@ -31,15 +33,13 @@ namespace _Code.Menu
             if (serverScoreClient == null)
                 serverScoreClient = GetComponent<ServerScoreClient>();
 
-            if (jsonManager != null)
-            {
-                jsonManager.Load();
-                jsonManager.ApplyDailyGoldRewardIfAvailable();
-                UpdatePlayerDataText();
-            }
+            if (googleLoginManager == null)
+                googleLoginManager = GetComponent<GoogleLoginManager>();
 
-            if (serverScoreClient != null)
-                serverScoreClient.FetchPlayerData(ApplyServerPlayerData, ApplyLocalPlayerDataOnly);
+            if (googleLoginManager != null)
+                googleLoginManager.LoggedIn += RefreshPlayerData;
+
+            RefreshPlayerData();
         }
 
         private void OnDestroy()
@@ -49,6 +49,22 @@ namespace _Code.Menu
 
             if (stageBtn != null)
                 stageBtn.onClick.RemoveListener(OpenStageScene);
+
+            if (googleLoginManager != null)
+                googleLoginManager.LoggedIn -= RefreshPlayerData;
+        }
+
+        public void RefreshPlayerData()
+        {
+            if (jsonManager != null)
+            {
+                jsonManager.Load();
+                jsonManager.ApplyDailyGoldRewardIfAvailable();
+                UpdatePlayerDataText();
+            }
+
+            if (serverScoreClient != null)
+                serverScoreClient.FetchPlayerData(ApplyServerPlayerData, ApplyLocalPlayerDataOnly);
         }
 
         private void ApplyServerPlayerData(ServerScoreClient.PlayerData serverData)
