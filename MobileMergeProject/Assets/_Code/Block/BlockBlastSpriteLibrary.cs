@@ -14,6 +14,7 @@ namespace _Code.Block
         private const string NightCatHomeBackgroundSpritePath = "BlockBlast/NightCatHomeBackground";
         private const string CatTowerFrameSpritePath = "BlockBlast/CatTowerFrameSprite";
         private const string MouseHoleFrameSpritePath = "BlockBlast/MouseHoleFrameSprite";
+        private const string Name = "l";
 
         private static Sprite _catBlockSprite;
         private static Sprite _blackCatBlockSprite;
