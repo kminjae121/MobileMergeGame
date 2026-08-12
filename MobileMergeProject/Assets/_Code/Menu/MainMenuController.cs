@@ -16,9 +16,11 @@ namespace _Code.Menu
         [SerializeField] private string stageSceneName = "StageScene";
         [SerializeField] private Button startBtn;
         [SerializeField] private Button stageBtn;
+        [SerializeField] private Button googleLoginBtn;
         [SerializeField] private JsonManager jsonManager;
         [SerializeField] private ServerScoreClient serverScoreClient;
         [SerializeField] private GoogleLoginManager googleLoginManager;
+        [SerializeField] private GoogleSignInTokenProvider googleSignInTokenProvider;
         [SerializeField] private TextMeshProUGUI maxScoreTxt;
         [SerializeField] private TextMeshProUGUI goldTxt;
 
@@ -30,11 +32,17 @@ namespace _Code.Menu
             if (stageBtn != null)
                 stageBtn.onClick.AddListener(OpenStageScene);
 
+            if (googleLoginBtn != null)
+                googleLoginBtn.onClick.AddListener(StartGoogleLogin);
+
             if (serverScoreClient == null)
                 serverScoreClient = GetComponent<ServerScoreClient>();
 
             if (googleLoginManager == null)
                 googleLoginManager = GetComponent<GoogleLoginManager>();
+
+            if (googleSignInTokenProvider == null)
+                googleSignInTokenProvider = GetComponent<GoogleSignInTokenProvider>();
 
             if (googleLoginManager != null)
                 googleLoginManager.LoggedIn += RefreshPlayerData;
@@ -49,6 +57,9 @@ namespace _Code.Menu
 
             if (stageBtn != null)
                 stageBtn.onClick.RemoveListener(OpenStageScene);
+
+            if (googleLoginBtn != null)
+                googleLoginBtn.onClick.RemoveListener(StartGoogleLogin);
 
             if (googleLoginManager != null)
                 googleLoginManager.LoggedIn -= RefreshPlayerData;
@@ -130,6 +141,17 @@ namespace _Code.Menu
         {
             if (!string.IsNullOrEmpty(stageSceneName))
                 SceneManager.LoadScene(stageSceneName);
+        }
+
+        public void StartGoogleLogin()
+        {
+            if (googleSignInTokenProvider == null)
+            {
+                Debug.LogWarning("Google sign-in token provider is missing.");
+                return;
+            }
+
+            googleSignInTokenProvider.SignIn();
         }
     }
 }
