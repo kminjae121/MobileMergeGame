@@ -17,6 +17,7 @@ namespace _Code.Auth
 #if CATBLAST_GOOGLE_SIGN_IN
         private readonly object _sync = new object();
         private readonly Queue<Action> _mainThreadActions = new Queue<Action>();
+        private GoogleSignInConfiguration _configuration;
 #endif
 
         private void Awake()
@@ -48,6 +49,9 @@ namespace _Code.Auth
         public void SignIn()
         {
 #if CATBLAST_GOOGLE_SIGN_IN
+#if UNITY_EDITOR
+            Debug.Log("Google Sign-In SDK is enabled. Build and Run on an Android device to test Google login.");
+#else
             if (loginManager == null)
             {
                 Debug.LogWarning("GoogleLoginManager is missing.");
@@ -60,14 +64,18 @@ namespace _Code.Auth
                 return;
             }
 
-            GoogleSignIn.Configuration = new GoogleSignInConfiguration
+            _configuration ??= new GoogleSignInConfiguration
             {
                 WebClientId = webClientId,
+                UseGameSignIn = false,
                 RequestEmail = true,
                 RequestIdToken = true
             };
 
+            GoogleSignIn.Configuration = _configuration;
+
             GoogleSignIn.DefaultInstance.SignIn().ContinueWith(HandleSignInFinished);
+#endif
 #else
             Debug.LogWarning("Google Sign-In SDK is not enabled. Import the SDK and add CATBLAST_GOOGLE_SIGN_IN to Scripting Define Symbols.");
 #endif
