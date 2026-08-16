@@ -1,3 +1,4 @@
+using _Code.Server;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -16,6 +17,12 @@ namespace _Code.Stage
         {
             _button = GetComponent<Button>();
             _button.onClick.AddListener(StartStage);
+            UpdateButtonState();
+        }
+
+        private void OnEnable()
+        {
+            UpdateButtonState();
         }
 
         private void OnDestroy()
@@ -26,8 +33,21 @@ namespace _Code.Stage
 
         private void StartStage()
         {
+            if (!PlayerIdProvider.IsSignedIn)
+            {
+                Debug.LogWarning("로그인 전에는 게임을 시작할 수 없습니다.");
+                UpdateButtonState();
+                return;
+            }
+
             StageRunContext.SelectStage(stageNumber);
             SceneManager.LoadScene(gameSceneName);
+        }
+
+        private void UpdateButtonState()
+        {
+            if (_button != null)
+                _button.interactable = PlayerIdProvider.IsSignedIn;
         }
     }
 }

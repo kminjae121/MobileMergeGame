@@ -50,8 +50,9 @@ namespace _Code.Menu
                 googleSignInTokenProvider = GetComponent<GoogleSignInTokenProvider>();
 
             if (googleLoginManager != null)
-                googleLoginManager.LoggedIn += RefreshPlayerData;
+                googleLoginManager.LoggedIn += HandleLoggedIn;
 
+            UpdateGameStartState();
             RefreshPlayerData();
         }
 
@@ -73,11 +74,13 @@ namespace _Code.Menu
                 googleLoginBtn.onClick.RemoveListener(StartGoogleLogin);
 
             if (googleLoginManager != null)
-                googleLoginManager.LoggedIn -= RefreshPlayerData;
+                googleLoginManager.LoggedIn -= HandleLoggedIn;
         }
 
         public void RefreshPlayerData()
         {
+            UpdateGameStartState();
+
             if (jsonManager != null)
             {
                 jsonManager.Load();
@@ -136,6 +139,9 @@ namespace _Code.Menu
 
         public void StartGame()
         {
+            if (!CanStartGame())
+                return;
+
             StageRunContext.SelectInfiniteMode();
 
             if (string.IsNullOrEmpty(gameSceneName) == false)
@@ -150,6 +156,9 @@ namespace _Code.Menu
 
         public void OpenStageScene()
         {
+            if (!CanStartGame())
+                return;
+
             if (!string.IsNullOrEmpty(stageSceneName))
                 SceneManager.LoadScene(stageSceneName);
         }
@@ -182,6 +191,33 @@ namespace _Code.Menu
             }
 
             googleSignInTokenProvider.SignInAutomatically();
+        }
+
+        private void HandleLoggedIn()
+        {
+            UpdateGameStartState();
+            RefreshPlayerData();
+        }
+
+        private bool CanStartGame()
+        {
+            if (PlayerIdProvider.IsSignedIn)
+                return true;
+
+            Debug.LogWarning("로그인 전에는 게임을 시작할 수 없습니다.");
+            StartGoogleLogin();
+            return false;
+        }
+
+        private void UpdateGameStartState()
+        {
+            bool canStart = PlayerIdProvider.IsSignedIn;
+
+            if (startBtn != null)
+                startBtn.interactable = canStart;
+
+            if (stageBtn != null)
+                stageBtn.interactable = canStart;
         }
     }
 }
