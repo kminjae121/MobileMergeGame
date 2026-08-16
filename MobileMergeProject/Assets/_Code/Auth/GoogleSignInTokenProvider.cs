@@ -18,6 +18,9 @@ namespace _Code.Auth
         private readonly object _sync = new object();
         private readonly Queue<Action> _mainThreadActions = new Queue<Action>();
         private GoogleSignInConfiguration _configuration;
+#if !UNITY_EDITOR
+        private bool _isSignInRunning;
+#endif
 #endif
 
         private void Awake()
@@ -52,16 +55,52 @@ namespace _Code.Auth
 #if UNITY_EDITOR
             Debug.Log("Google Sign-In SDK is enabled. Build and Run on an Android device to test Google login.");
 #else
+            if (!TryPrepareSignIn())
+                return;
+
+            GoogleSignIn.DefaultInstance.SignIn().ContinueWith(HandleSignInFinished);
+#endif
+#else
+            Debug.LogWarning("Google Sign-In SDK is not enabled. Import the SDK and add CATBLAST_GOOGLE_SIGN_IN to Scripting Define Symbols.");
+#endif
+        }
+
+        public void SignInAutomatically()
+        {
+#if CATBLAST_GOOGLE_SIGN_IN
+#if UNITY_EDITOR
+            Debug.Log("Google automatic sign-in is enabled. Build and Run on an Android device to test Google login.");
+#else
+            if (!TryPrepareSignIn())
+                return;
+
+            GoogleSignIn.DefaultInstance.SignInSilently().ContinueWith(HandleSilentSignInFinished);
+#endif
+#else
+            Debug.LogWarning("Google Sign-In SDK is not enabled. Import the SDK and add CATBLAST_GOOGLE_SIGN_IN to Scripting Define Symbols.");
+#endif
+        }
+
+#if CATBLAST_GOOGLE_SIGN_IN
+#if !UNITY_EDITOR
+        private bool TryPrepareSignIn()
+        {
+            if (_isSignInRunning)
+            {
+                Debug.Log("Google sign-in is already running.");
+                return false;
+            }
+
             if (loginManager == null)
             {
                 Debug.LogWarning("GoogleLoginManager is missing.");
-                return;
+                return false;
             }
 
             if (string.IsNullOrWhiteSpace(webClientId))
             {
                 Debug.LogWarning("Google Web Client ID is empty.");
-                return;
+                return false;
             }
 
             _configuration ??= new GoogleSignInConfiguration
@@ -73,19 +112,36 @@ namespace _Code.Auth
             };
 
             GoogleSignIn.Configuration = _configuration;
-
-            GoogleSignIn.DefaultInstance.SignIn().ContinueWith(HandleSignInFinished);
-#endif
-#else
-            Debug.LogWarning("Google Sign-In SDK is not enabled. Import the SDK and add CATBLAST_GOOGLE_SIGN_IN to Scripting Define Symbols.");
-#endif
+            _isSignInRunning = true;
+            return true;
         }
 
-#if CATBLAST_GOOGLE_SIGN_IN
+        private void HandleSilentSignInFinished(Task<GoogleSignInUser> task)
+        {
+            EnqueueOnMainThread(() =>
+            {
+                _isSignInRunning = false;
+
+                if (!task.IsCanceled && !task.IsFaulted)
+                {
+                    loginManager.LoginWithGoogleIdToken(task.Result.IdToken);
+                    return;
+                }
+
+                Debug.Log("Google silent sign-in failed. Trying interactive sign-in.");
+                SignIn();
+            });
+        }
+#endif
+
         private void HandleSignInFinished(Task<GoogleSignInUser> task)
         {
             EnqueueOnMainThread(() =>
             {
+#if !UNITY_EDITOR
+                _isSignInRunning = false;
+#endif
+
                 if (task.IsCanceled)
                 {
                     Debug.LogWarning("Google sign-in was canceled.");

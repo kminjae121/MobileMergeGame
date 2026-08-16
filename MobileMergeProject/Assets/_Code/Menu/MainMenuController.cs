@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using _Code.Auth;
 using _Code.Manager;
 using _Code.Server;
@@ -23,6 +24,10 @@ namespace _Code.Menu
         [SerializeField] private GoogleSignInTokenProvider googleSignInTokenProvider;
         [SerializeField] private TextMeshProUGUI maxScoreTxt;
         [SerializeField] private TextMeshProUGUI goldTxt;
+        [SerializeField] private bool autoGoogleLoginOnStart = true;
+        [SerializeField, Min(0f)] private float autoGoogleLoginDelay = 0.2f;
+
+        private bool _autoGoogleLoginStarted;
 
         private void Awake()
         {
@@ -48,6 +53,12 @@ namespace _Code.Menu
                 googleLoginManager.LoggedIn += RefreshPlayerData;
 
             RefreshPlayerData();
+        }
+
+        private void Start()
+        {
+            if (autoGoogleLoginOnStart)
+                StartCoroutine(AutoGoogleLoginRoutine());
         }
 
         private void OnDestroy()
@@ -152,6 +163,25 @@ namespace _Code.Menu
             }
 
             googleSignInTokenProvider.SignIn();
+        }
+
+        private IEnumerator AutoGoogleLoginRoutine()
+        {
+            if (_autoGoogleLoginStarted)
+                yield break;
+
+            _autoGoogleLoginStarted = true;
+
+            if (autoGoogleLoginDelay > 0f)
+                yield return new WaitForSeconds(autoGoogleLoginDelay);
+
+            if (googleSignInTokenProvider == null)
+            {
+                Debug.LogWarning("Google sign-in token provider is missing.");
+                yield break;
+            }
+
+            googleSignInTokenProvider.SignInAutomatically();
         }
     }
 }
