@@ -78,6 +78,9 @@ namespace _Code.Manager
 
             foreach (BlockPiece piece in _pieces)
             {
+                if (piece == null)
+                    continue;
+
                 if (!piece.IsPlaced && blockField.HasAnyPlacement(piece))
                     return true;
             }

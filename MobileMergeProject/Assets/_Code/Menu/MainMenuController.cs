@@ -58,8 +58,16 @@ namespace _Code.Menu
 
         private void Start()
         {
-            if (autoGoogleLoginOnStart)
-                StartCoroutine(AutoGoogleLoginRoutine());
+            UpdateGameStartState();
+
+            if (!autoGoogleLoginOnStart)
+                return;
+
+#if UNITY_EDITOR
+            return;
+#else
+            StartCoroutine(AutoGoogleLoginRoutine());
+#endif
         }
 
         private void OnDestroy()
@@ -201,7 +209,7 @@ namespace _Code.Menu
 
         private bool CanStartGame()
         {
-            if (PlayerIdProvider.IsSignedIn)
+            if (PlayerIdProvider.CanPlay)
                 return true;
 
             Debug.LogWarning("로그인 전에는 게임을 시작할 수 없습니다.");
@@ -211,7 +219,7 @@ namespace _Code.Menu
 
         private void UpdateGameStartState()
         {
-            bool canStart = PlayerIdProvider.IsSignedIn;
+            bool canStart = PlayerIdProvider.CanPlay;
 
             if (startBtn != null)
                 startBtn.interactable = canStart;

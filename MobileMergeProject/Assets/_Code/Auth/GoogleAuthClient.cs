@@ -55,11 +55,8 @@ namespace _Code.Auth
             StartCoroutine(LoginRoutine(url, payload, completed, failed));
         }
 
-        private IEnumerator LoginRoutine(
-            string url,
-            GoogleLoginRequestDto payload,
-            Action<GoogleLoginResult> completed,
-            Action<string> failed)
+        private IEnumerator LoginRoutine(string url, GoogleLoginRequestDto payload, Action<GoogleLoginResult> completed
+            ,Action<string> failed)
         {
             string json = JsonUtility.ToJson(payload);
             byte[] body = Encoding.UTF8.GetBytes(json);

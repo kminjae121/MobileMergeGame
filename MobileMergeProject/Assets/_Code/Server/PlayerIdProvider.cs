@@ -40,6 +40,17 @@ namespace _Code.Server
         }
 
         public static bool IsSignedIn => !string.IsNullOrWhiteSpace(PlayerPrefs.GetString(AuthenticatedPlayerIdKey, string.Empty));
+        public static bool CanPlay
+        {
+            get
+            {
+#if UNITY_EDITOR
+                return true;
+#else
+                return IsSignedIn;
+#endif
+            }
+        }
 
         public static void SetPlayerId(string playerId)
         {

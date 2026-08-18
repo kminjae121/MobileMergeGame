@@ -33,7 +33,7 @@ namespace _Code.Stage
 
         private void StartStage()
         {
-            if (!PlayerIdProvider.IsSignedIn)
+            if (!PlayerIdProvider.CanPlay)
             {
                 Debug.LogWarning("로그인 전에는 게임을 시작할 수 없습니다.");
                 UpdateButtonState();
@@ -47,7 +47,7 @@ namespace _Code.Stage
         private void UpdateButtonState()
         {
             if (_button != null)
-                _button.interactable = PlayerIdProvider.IsSignedIn;
+                _button.interactable = PlayerIdProvider.CanPlay;
         }
     }
 }

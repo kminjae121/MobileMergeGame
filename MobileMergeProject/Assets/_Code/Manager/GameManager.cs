@@ -6,6 +6,7 @@ using _Code.Server;
 using TMPro;
 using UnityEngine;
 using MouseView = _Code.Mouse.Mouse;
+using TutorialController = _Code.Manager.TutorialController;
 
 namespace _Code.Manager
 {
@@ -35,6 +36,7 @@ namespace _Code.Manager
         [SerializeField] private BoardShiftController boardShiftController;
         [SerializeField] private LineClearEffectPlayer lineClearEffectPlayer;
         [SerializeField] private PlacementScoreGuard placementScoreGuard;
+        [SerializeField] private TutorialController tutorialController;
 
         private readonly List<Vector3> _clearedBlockPositions = new List<Vector3>(36);
         private bool _isGameOver;
@@ -75,7 +77,9 @@ namespace _Code.Manager
                 return;
             }
 
-            SetMessage(stageModeController.GetStartMessage());
+            bool tutorialStarted = tutorialController != null && tutorialController.TryBegin(stageModeController.IsStageMode);
+            if (!tutorialStarted)
+                SetMessage(stageModeController.GetStartMessage());
         }
 
         private void Update()
@@ -96,6 +100,14 @@ namespace _Code.Manager
         private void OnDestroy()
         {
             UnsubscribePieces();
+        }
+
+        public void StartTutorial()
+        {
+            if (_isGameOver || tutorialController == null)
+                return;
+
+            tutorialController.BeginManually();
         }
 
         private void ResolveSceneReferences()
@@ -141,6 +153,9 @@ namespace _Code.Manager
 
             if (placementScoreGuard == null)
                 placementScoreGuard = GetOrAdd<PlacementScoreGuard>();
+
+            if (tutorialController == null)
+                tutorialController = GetOrAdd<TutorialController>();
         }
 
         private void ConfigureControllers()
@@ -149,6 +164,7 @@ namespace _Code.Manager
             boardShiftController.Configure(blockField, randomBlockManager, mouse, swipeMinDistance, enableKeyboardInput);
             lineClearEffectPlayer.Configure(hapticFeedback, lineClearParticleEffect);
             placementScoreGuard.Configure(jsonManager, serverScoreClient, resetSceneName);
+            tutorialController.Configure(messageText);
         }
 
         private T GetOrAdd<T>() where T : Component
@@ -162,6 +178,12 @@ namespace _Code.Manager
             placementPreview?.Hide();
 
             if (_isGameOver)
+            {
+                piece.ReturnToSlot();
+                return;
+            }
+
+            if (tutorialController != null && !tutorialController.CanPlacePiece(piece))
             {
                 piece.ReturnToSlot();
                 return;
@@ -212,7 +234,7 @@ namespace _Code.Manager
                 return;
             }
 
-            if (!randomBlockManager.CanPlaceAllRemainingPieces(blockField))
+            if (!randomBlockManager.HasAnyAvailablePlacement(blockField))
             {
                 EndGame();
                 return;
@@ -221,11 +243,16 @@ namespace _Code.Manager
             SetMessage(string.Empty);
         }
 
-        private void ShiftBoard(Vector2Int direction)
+        private bool ShiftBoard(Vector2Int direction)
         {
             if (boardShiftController == null ||
                 !boardShiftController.TryShift(direction, _clearedBlockPositions, out BoardShiftController.BoardShiftResult result))
-                return;
+            {
+                tutorialController?.NotifyBoardShiftFailed(direction);
+                return false;
+            }
+
+            tutorialController?.NotifyBoardShiftSucceeded(direction);
 
             if (result.ClearedLines > 0)
             {
@@ -234,15 +261,18 @@ namespace _Code.Manager
             }
 
             if (TryCompleteStage())
-                return;
+                return true;
 
-            if (!result.CanPlaceRemainingPieces)
+            if (!result.HasAnyRemainingPlacement)
             {
                 EndGame();
-                return;
+                return true;
             }
 
-            SetMessage(result.HasVisibleChange ? "Shift" : string.Empty);
+            if (tutorialController == null || !tutorialController.HasPriorityMessage)
+                SetMessage(result.HasVisibleChange ? "Shift" : string.Empty);
+
+            return true;
         }
 
         private void SubscribePieces()
@@ -308,7 +338,9 @@ namespace _Code.Manager
                 return;
 
             BlockPiece activePiece = BlockPiece.ActivePiece;
-            if (_isGameOver || activePiece == null)
+            if (_isGameOver ||
+                activePiece == null ||
+                tutorialController != null && tutorialController.BlocksPlacementPreview)
             {
                 placementPreview.Hide();
                 return;

@@ -59,27 +59,25 @@ namespace _Code.Manager
             if (mouse != null && !mouse.TryMove(direction, blockField))
                 return false;
 
-            Debug.Log("CatBlast");
-
             bool moved = blockField.Compact(direction);
             int clearedLines = blockField.ClearCompletedLines(clearedWorldPositions);
-            bool canPlaceRemainingPieces = randomBlockManager.CanPlaceAllRemainingPieces(blockField);
-            result = new BoardShiftResult(moved, clearedLines, canPlaceRemainingPieces);
+            bool hasAnyRemainingPlacement = randomBlockManager.HasAnyAvailablePlacement(blockField);
+            result = new BoardShiftResult(moved, clearedLines, hasAnyRemainingPlacement);
             return true;
         }
 
         public readonly struct BoardShiftResult
         {
-            public BoardShiftResult(bool moved, int clearedLines, bool canPlaceRemainingPieces)
+            public BoardShiftResult(bool moved, int clearedLines, bool hasAnyRemainingPlacement)
             {
                 Moved = moved;
                 ClearedLines = clearedLines;
-                CanPlaceRemainingPieces = canPlaceRemainingPieces;
+                HasAnyRemainingPlacement = hasAnyRemainingPlacement;
             }
 
             public bool Moved { get; }
             public int ClearedLines { get; }
-            public bool CanPlaceRemainingPieces { get; }
+            public bool HasAnyRemainingPlacement { get; }
             public bool HasVisibleChange => Moved || ClearedLines > 0;
         }
 
