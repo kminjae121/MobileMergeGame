@@ -116,7 +116,7 @@ namespace _Code.Field
                 Vector2Int point = anchor + cell;
 
                 if (TryGetField(point, out Field field))
-                    field.SetObject(block.gameObject, block.BlockColor, block.BlockSprite, groupId);
+                    field.SetObject(block.gameObject, Color.white, block.BlockSprite, groupId);
             }
         }
 

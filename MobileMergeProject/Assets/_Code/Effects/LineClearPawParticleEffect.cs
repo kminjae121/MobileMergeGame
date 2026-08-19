@@ -5,231 +5,84 @@ namespace _Code.Effects
 {
     public sealed class LineClearPawParticleEffect : MonoBehaviour
     {
-        [SerializeField] private Sprite _pawSprite;
-        [SerializeField] private Sprite _sparkleSprite;
+        [SerializeField] private ParticleSystem _pawParticles;
+        [SerializeField] private ParticleSystem _sparkleParticles;
         [SerializeField] private bool _playOnStart;
         [SerializeField, Min(1)] private int _pawBurstCount = 18;
         [SerializeField, Min(0)] private int _sparkleBurstCount = 10;
         [SerializeField, Min(1)] private int _perBlockPawBurstCount = 4;
         [SerializeField, Min(0)] private int _perBlockSparkleBurstCount = 2;
-        [SerializeField, Min(0.05f)] private float _burstRadius = 0.72f;
-        [SerializeField] private int _sortingOrder = 60;
+        [SerializeField, Min(0.1f)] private float _releaseDelay = 1.25f;
 
-        private const string PawSpritePath = "BlockBlast/LineClearPawParticleSprite";
-        private const string SparkleSpritePath = "BlockBlast/LineClearSparkleParticleSprite";
+        private ParticleSystem[] _particles;
 
-        private ParticleSystem _pawParticles;
-        private ParticleSystem _sparkleParticles;
-        private Material _particleMaterial;
-        private bool _systemsConfigured;
+        public float ReleaseDelay => _releaseDelay;
+        public bool IsPlaying => HasAnyAliveParticle();
 
         private void Awake()
         {
-            LoadSprites();
-            EnsureParticleSystems();
+            CacheParticles();
+            StopAndClear();
         }
 
         private void Start()
         {
             if (_playOnStart)
-                Play(transform.position, 1);
+                Play(transform.position, 1, Color.white);
         }
 
-        private void OnDestroy()
+        public void Play(Vector3 worldPosition, int clearedLineCount, Color effectColor)
         {
-            if (_particleMaterial != null)
-                Destroy(_particleMaterial);
-        }
-
-        public void Play(Vector3 worldPosition, int clearedLineCount)
-        {
-            LoadSprites();
-            EnsureParticleSystems();
-
             transform.position = worldPosition;
+            gameObject.SetActive(true);
+            StopAndClear();
 
             int burstMultiplier = Mathf.Max(1, clearedLineCount);
-            Emit(_pawParticles, _pawBurstCount * burstMultiplier);
-            Emit(_sparkleParticles, _sparkleBurstCount * burstMultiplier);
+            Emit(_pawParticles, _pawBurstCount * burstMultiplier, effectColor);
+            Emit(_sparkleParticles, _sparkleBurstCount * burstMultiplier, effectColor);
         }
 
-        public void PlayAtPositions(IReadOnlyList<Vector3> worldPositions, int clearedLineCount)
+        public void PlayAtPositions(IReadOnlyList<Vector3> worldPositions, int clearedLineCount, Color particleColor)
         {
             if (worldPositions == null || worldPositions.Count == 0)
             {
-                Play(transform.position, clearedLineCount);
+                Play(transform.position, clearedLineCount, particleColor);
                 return;
             }
 
-            LoadSprites();
-            EnsureParticleSystems();
-            Clear(_pawParticles);
-            Clear(_sparkleParticles);
+            gameObject.SetActive(true);
+            StopAndClear();
 
             foreach (Vector3 worldPosition in worldPositions)
             {
-                EmitAt(_pawParticles, worldPosition, _perBlockPawBurstCount);
-                EmitAt(_sparkleParticles, worldPosition, _perBlockSparkleBurstCount);
+                EmitAt(_pawParticles, worldPosition, _perBlockPawBurstCount, particleColor);
+                EmitAt(_sparkleParticles, worldPosition, _perBlockSparkleBurstCount, particleColor);
             }
         }
 
-        private void LoadSprites()
+        public void StopAndClear()
         {
-            if (_pawSprite == null)
-                _pawSprite = Resources.Load<Sprite>(PawSpritePath);
+            CacheParticles();
 
-            if (_sparkleSprite == null)
-                _sparkleSprite = Resources.Load<Sprite>(SparkleSpritePath);
+            foreach (ParticleSystem particles in _particles)
+                Clear(particles);
         }
 
-        private void EnsureParticleSystems()
-        {
-            if (_pawParticles == null)
-                _pawParticles = CreateParticleSystem("PawBurstParticles");
-
-            if (_sparkleParticles == null)
-                _sparkleParticles = CreateParticleSystem("SparkleParticles");
-
-            if (_systemsConfigured)
-                return;
-
-            ConfigurePawParticles(_pawParticles);
-            ConfigureSparkleParticles(_sparkleParticles);
-            _systemsConfigured = true;
-        }
-
-        private ParticleSystem CreateParticleSystem(string objectName)
-        {
-            GameObject particleObject = new GameObject(objectName);
-            particleObject.transform.SetParent(transform, false);
-
-            ParticleSystem particles = particleObject.AddComponent<ParticleSystem>();
-            particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            return particles;
-        }
-
-        private void ConfigurePawParticles(ParticleSystem particles)
-        {
-            ParticleSystem.MainModule main = particles.main;
-            main.duration = 0.75f;
-            main.loop = false;
-            main.prewarm = false;
-            main.startDelay = 0f;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.48f, 0.86f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(1.15f, 2.25f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.16f, 0.28f);
-            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
-            main.gravityModifier = new ParticleSystem.MinMaxCurve(0.05f, 0.18f);
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.maxParticles = 180;
-
-            ParticleSystem.EmissionModule emission = particles.emission;
-            emission.enabled = false;
-
-            ParticleSystem.ShapeModule shape = particles.shape;
-            shape.enabled = true;
-            shape.shapeType = ParticleSystemShapeType.Circle;
-            shape.radius = _burstRadius;
-            shape.radiusThickness = 0.45f;
-            shape.randomDirectionAmount = 0.35f;
-
-            ParticleSystem.ColorOverLifetimeModule colorOverLifetime = particles.colorOverLifetime;
-            colorOverLifetime.enabled = true;
-            colorOverLifetime.color = new ParticleSystem.MinMaxGradient(CreateFadeGradient(1f, 0.78f, 0f));
-
-            ParticleSystem.SizeOverLifetimeModule sizeOverLifetime = particles.sizeOverLifetime;
-            sizeOverLifetime.enabled = true;
-            sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, CreatePopCurve());
-
-            ParticleSystem.RotationOverLifetimeModule rotationOverLifetime = particles.rotationOverLifetime;
-            rotationOverLifetime.enabled = true;
-            rotationOverLifetime.z = new ParticleSystem.MinMaxCurve(-1.5f, 1.5f);
-
-            ConfigureRenderer(particles, _pawSprite, _sortingOrder);
-        }
-
-        private void ConfigureSparkleParticles(ParticleSystem particles)
-        {
-            ParticleSystem.MainModule main = particles.main;
-            main.duration = 0.55f;
-            main.loop = false;
-            main.prewarm = false;
-            main.startDelay = 0f;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.32f, 0.58f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(0.75f, 1.55f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.16f);
-            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
-            main.gravityModifier = 0f;
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.maxParticles = 120;
-
-            ParticleSystem.EmissionModule emission = particles.emission;
-            emission.enabled = false;
-
-            ParticleSystem.ShapeModule shape = particles.shape;
-            shape.enabled = true;
-            shape.shapeType = ParticleSystemShapeType.Circle;
-            shape.radius = _burstRadius * 0.78f;
-            shape.radiusThickness = 0.15f;
-            shape.randomDirectionAmount = 0.45f;
-
-            ParticleSystem.ColorOverLifetimeModule colorOverLifetime = particles.colorOverLifetime;
-            colorOverLifetime.enabled = true;
-            colorOverLifetime.color = new ParticleSystem.MinMaxGradient(CreateFadeGradient(1f, 1f, 0f));
-
-            ParticleSystem.SizeOverLifetimeModule sizeOverLifetime = particles.sizeOverLifetime;
-            sizeOverLifetime.enabled = true;
-            sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, CreatePopCurve());
-
-            ConfigureRenderer(particles, _sparkleSprite, _sortingOrder + 1);
-        }
-
-        private void ConfigureRenderer(ParticleSystem particles, Sprite sprite, int sortingOrder)
-        {
-            ParticleSystemRenderer renderer = particles.GetComponent<ParticleSystemRenderer>();
-            renderer.renderMode = ParticleSystemRenderMode.Billboard;
-            renderer.sortingOrder = sortingOrder;
-
-            Material material = GetParticleMaterial();
-            if (material != null)
-                renderer.material = material;
-
-            ParticleSystem.TextureSheetAnimationModule textureSheetAnimation = particles.textureSheetAnimation;
-            textureSheetAnimation.enabled = sprite != null;
-
-            if (sprite == null)
-                return;
-
-            textureSheetAnimation.mode = ParticleSystemAnimationMode.Sprites;
-            textureSheetAnimation.AddSprite(sprite);
-        }
-
-        private Material GetParticleMaterial()
-        {
-            if (_particleMaterial != null)
-                return _particleMaterial;
-
-            Shader shader = Shader.Find("Sprites/Default");
-            if (shader == null)
-                shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
-
-            if (shader == null)
-                return null;
-
-            _particleMaterial = new Material(shader);
-            return _particleMaterial;
-        }
-
-        private static void Emit(ParticleSystem particles, int count)
+        private static void Emit(ParticleSystem particles, int count, Color effectColor)
         {
             if (particles == null || count <= 0)
                 return;
 
             Clear(particles);
-            particles.Emit(count);
+
+            ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams
+            {
+                startColor = effectColor
+            };
+            particles.Emit(emitParams, count);
         }
 
-        private static void EmitAt(ParticleSystem particles, Vector3 worldPosition, int count)
+        private static void EmitAt(ParticleSystem particles, Vector3 worldPosition, int count, Color particleColor)
         {
             if (particles == null || count <= 0)
                 return;
@@ -237,6 +90,7 @@ namespace _Code.Effects
             ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams
             {
                 position = worldPosition,
+                startColor = particleColor,
                 applyShapeToPosition = true
             };
             particles.Emit(emitParams, count);
@@ -248,30 +102,44 @@ namespace _Code.Effects
                 particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
 
-        private static Gradient CreateFadeGradient(float startAlpha, float middleAlpha, float endAlpha)
+        private void CacheParticles()
         {
-            Gradient gradient = new Gradient();
-            gradient.SetKeys(
-                new[]
-                {
-                    new GradientColorKey(Color.white, 0f),
-                    new GradientColorKey(Color.white, 1f)
-                },
-                new[]
-                {
-                    new GradientAlphaKey(startAlpha, 0f),
-                    new GradientAlphaKey(middleAlpha, 0.42f),
-                    new GradientAlphaKey(endAlpha, 1f)
-                });
-            return gradient;
+            if (_particles != null)
+                return;
+
+            if (_pawParticles == null || _sparkleParticles == null)
+            {
+                ParticleSystem[] childParticles = GetComponentsInChildren<ParticleSystem>(true);
+
+                if (_pawParticles == null && childParticles.Length > 0)
+                    _pawParticles = childParticles[0];
+
+                if (_sparkleParticles == null && childParticles.Length > 1)
+                    _sparkleParticles = childParticles[1];
+            }
+
+            List<ParticleSystem> particles = new List<ParticleSystem>(2);
+
+            if (_pawParticles != null)
+                particles.Add(_pawParticles);
+
+            if (_sparkleParticles != null && _sparkleParticles != _pawParticles)
+                particles.Add(_sparkleParticles);
+
+            _particles = particles.ToArray();
         }
 
-        private static AnimationCurve CreatePopCurve()
+        private bool HasAnyAliveParticle()
         {
-            return new AnimationCurve(
-                new Keyframe(0f, 0.2f),
-                new Keyframe(0.16f, 1.1f),
-                new Keyframe(1f, 0.35f));
+            CacheParticles();
+
+            foreach (ParticleSystem particles in _particles)
+            {
+                if (particles != null && particles.IsAlive(true))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

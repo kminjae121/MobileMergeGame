@@ -3,7 +3,9 @@ using _Code.Block;
 using _Code.Effects;
 using _Code.Field;
 using _Code.Server;
+using Code.Core.Events.Bus;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using MouseView = _Code.Mouse.Mouse;
 using TutorialController = _Code.Manager.TutorialController;
@@ -41,6 +43,10 @@ namespace _Code.Manager
         private readonly List<Vector3> _clearedBlockPositions = new List<Vector3>(36);
         private bool _isGameOver;
 
+        private static readonly Color BlackCatEffectColor = new Color(0.08f, 0.08f, 0.08f, 1f);
+        private static readonly Color WhiteCatEffectColor = Color.white;
+        private static readonly Color YellowCatEffectColor = new Color(1f, 0.72f, 0.62f, 1f);
+
         private void Awake()
         {
             if (blockField == null)
@@ -77,9 +83,9 @@ namespace _Code.Manager
                 return;
             }
 
-            bool tutorialStarted = tutorialController != null && tutorialController.TryBegin(stageModeController.IsStageMode);
-            if (!tutorialStarted)
-                SetMessage(stageModeController.GetStartMessage());
+            //bool tutorialStarted = tutorialController != null && tutorialController.TryBegin(stageModeController.IsStageMode);
+            //if (!tutorialStarted)
+            //    SetMessage(stageModeController.GetStartMessage());
         }
 
         private void Update()
@@ -107,7 +113,7 @@ namespace _Code.Manager
             if (_isGameOver || tutorialController == null)
                 return;
 
-            tutorialController.BeginManually();
+            //tutorialController.BeginManually();
         }
 
         private void ResolveSceneReferences()
@@ -133,8 +139,7 @@ namespace _Code.Manager
             if (placementPreview == null)
                 placementPreview = gameObject.AddComponent<BlockPlacementPreview>();
 
-            if (lineClearParticleEffect == null)
-                lineClearParticleEffect = GetComponentInChildren<LineClearPawParticleEffect>(true);
+            // This reference should be a prefab asset. LineClearEffectPlayer pools prefab instances at runtime.
         }
 
         private void ResolveControllers()
@@ -164,7 +169,7 @@ namespace _Code.Manager
             boardShiftController.Configure(blockField, randomBlockManager, mouse, swipeMinDistance, enableKeyboardInput);
             lineClearEffectPlayer.Configure(hapticFeedback, lineClearParticleEffect);
             placementScoreGuard.Configure(jsonManager, serverScoreClient, resetSceneName);
-            tutorialController.Configure(messageText);
+            //tutorialController.Configure(messageText);
         }
 
         private T GetOrAdd<T>() where T : Component
@@ -182,13 +187,7 @@ namespace _Code.Manager
                 piece.ReturnToSlot();
                 return;
             }
-
-            if (tutorialController != null && !tutorialController.CanPlacePiece(piece))
-            {
-                piece.ReturnToSlot();
-                return;
-            }
-
+            
             if (!blockField.TryGetAnchorFor(piece, out Vector2Int anchor) || !blockField.CanInstall(piece, anchor))
             {
                 piece.ReturnToSlot();
@@ -209,8 +208,23 @@ namespace _Code.Manager
             int clearedLines = blockField.ClearCompletedLines(_clearedBlockPositions);
             if (clearedLines > 0)
             {
+                switch (clearedLines)
+                {
+                    case 1:
+                        Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.1f));
+                        break;
+                    case 2:
+                        Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.2f));
+                        break;
+                    case 3:
+                        Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.3f));
+                        break;
+                    case 4:
+                        Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.4f));
+                        break;
+                }
                 playerProgressController.AddScore(clearedLines * 100 + clearedLines * clearedLines * 50, false);
-                lineClearEffectPlayer.Play(clearedLines, _clearedBlockPositions);
+                lineClearEffectPlayer.Play(clearedLines, _clearedBlockPositions, GetLineClearEffectColor(piece));
             }
 
             if (hasValidationSnapshot)
@@ -248,16 +262,16 @@ namespace _Code.Manager
             if (boardShiftController == null ||
                 !boardShiftController.TryShift(direction, _clearedBlockPositions, out BoardShiftController.BoardShiftResult result))
             {
-                tutorialController?.NotifyBoardShiftFailed(direction);
+                //tutorialController?.NotifyBoardShiftFailed(direction);
                 return false;
             }
 
-            tutorialController?.NotifyBoardShiftSucceeded(direction);
+            //tutorialController?.NotifyBoardShiftSucceeded(direction);
 
             if (result.ClearedLines > 0)
             {
                 playerProgressController.AddScore(result.ClearedLines * 90 + result.ClearedLines * result.ClearedLines * 40, true);
-                lineClearEffectPlayer.Play(result.ClearedLines, _clearedBlockPositions);
+                lineClearEffectPlayer.Play(result.ClearedLines, _clearedBlockPositions,Color.white);
             }
 
             if (TryCompleteStage())
@@ -269,8 +283,8 @@ namespace _Code.Manager
                 return true;
             }
 
-            if (tutorialController == null || !tutorialController.HasPriorityMessage)
-                SetMessage(result.HasVisibleChange ? "Shift" : string.Empty);
+            //if (tutorialController == null || !tutorialController.HasPriorityMessage)
+            //    SetMessage(result.HasVisibleChange ? "Shift" : string.Empty);
 
             return true;
         }
@@ -308,6 +322,43 @@ namespace _Code.Manager
             return true;
         }
 
+        private static Color GetLineClearEffectColor(BlockPiece piece)
+        {
+            if (piece == null || piece.BlockSprite == null)
+                return WhiteCatEffectColor;
+
+            Sprite blockSprite = piece.BlockSprite;
+            IReadOnlyList<Sprite> catSprites = BlockBlastSpriteLibrary.CatBlockSprites;
+
+            if (catSprites.Count > 0 && blockSprite == catSprites[0])
+                return BlackCatEffectColor;
+
+            if (catSprites.Count > 1 && blockSprite == catSprites[1])
+                return WhiteCatEffectColor;
+
+            if (catSprites.Count > 2 && blockSprite == catSprites[2])
+                return YellowCatEffectColor;
+
+            return GetLineClearEffectColorByName(blockSprite.name);
+        }
+
+        private static Color GetLineClearEffectColorByName(string spriteName)
+        {
+            if (string.IsNullOrEmpty(spriteName))
+                return WhiteCatEffectColor;
+
+            if (spriteName.Contains("Black"))
+                return BlackCatEffectColor;
+
+            if (spriteName.Contains("White"))
+                return WhiteCatEffectColor;
+
+            if (spriteName.Contains("Sphynx") || spriteName.Contains("CatBlock"))
+                return YellowCatEffectColor;
+
+            return WhiteCatEffectColor;
+        }
+
         private void CompleteStage()
         {
             _isGameOver = true;
@@ -339,8 +390,7 @@ namespace _Code.Manager
 
             BlockPiece activePiece = BlockPiece.ActivePiece;
             if (_isGameOver ||
-                activePiece == null ||
-                tutorialController != null && tutorialController.BlocksPlacementPreview)
+                activePiece == null)
             {
                 placementPreview.Hide();
                 return;

@@ -23,7 +23,6 @@ namespace _Code.Block
 
         private readonly List<Vector2Int> _cells = new List<Vector2Int>(9);
         private BoxCollider2D _touchCollider;
-        private Color _color = Color.white;
         private Sprite _catSprite;
         private Vector2 _visualCenter;
         private Vector3 _slotPosition;
@@ -37,7 +36,6 @@ namespace _Code.Block
         public event Action<BlockPiece> Released;
 
         public override IReadOnlyList<Vector2Int> Cells => _cells;
-        public override Color BlockColor => _color;
         public override Sprite BlockSprite => _catSprite != null ? _catSprite : BlockBlastSpriteLibrary.CatBlockSprite;
         public bool IsPlaced => _isPlaced;
         public float CellSize => _cellSize;
@@ -104,7 +102,6 @@ namespace _Code.Block
                 _cells.Add(shape.Cells[i]);
 
             _visualCenter = shape.VisualCenter;
-            _color = color;
             _catSprite = catSprite != null ? catSprite : BlockBlastSpriteLibrary.CatBlockSprite;
             _isPlaced = false;
             _isDragging = false;
@@ -287,7 +284,6 @@ namespace _Code.Block
                 cellView.transform.localPosition = new Vector3((cell.x - _visualCenter.x) * displayCellSize, (cell.y - _visualCenter.y) * displayCellSize, 0f);
                 cellView.transform.localScale = Vector3.one * (displayCellSize * cellScaleMultiplier);
                 cellView.SetSprite(BlockSprite);
-                cellView.SetColor(_color);
                 cellView.SetSortingOrder(_defaultSortingOrder);
             }
         }
