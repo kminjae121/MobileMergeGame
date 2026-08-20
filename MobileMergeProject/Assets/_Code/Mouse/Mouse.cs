@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using _Code.Block;
 using _Code.Field;
+using DG.Tweening;
 
 namespace _Code.Mouse
 {
@@ -124,6 +125,7 @@ namespace _Code.Mouse
 
         private void ApplyPosition(BlockField blockField)
         {
+            transform.DOKill();
             if (blockField == null)
                 return;
 
@@ -158,7 +160,7 @@ namespace _Code.Mouse
                     break;
             }
 
-            transform.position = position;
+            transform.DOMove(position, 0.2f, false).SetEase(Ease.Linear);
         }
 
         private void ApplySprite()

@@ -1,4 +1,5 @@
 using _Code.Block;
+using DG.Tweening;
 using UnityEngine;
 
 namespace _Code.Field
@@ -8,12 +9,17 @@ namespace _Code.Field
         [field: SerializeField] public Vector2Int Point { get; private set; }
         [SerializeField] private SpriteRenderer _backgroundRenderer;
         [SerializeField] private SpriteRenderer _objectRenderer;
+        [SerializeField, Min(0f)] private float _objectMoveDuration = 0.2f;
+        [SerializeField] private Ease _objectMoveEase = Ease.Linear;
 
         private bool _isHaveObject;
         private GameObject _thisObject;
         private Color _currentColor = Color.white;
         private Sprite _currentSprite;
         private int _currentGroupId = -1;
+        private Vector3 _objectRendererHomeLocalPosition;
+        private bool _hasObjectRendererHomeLocalPosition;
+        private Tween _objectMoveTween;
 
         public bool IsHaveObject => _isHaveObject;
         public bool IsEmpty => !_isHaveObject;
@@ -21,12 +27,14 @@ namespace _Code.Field
         public Color CurrentColor => _currentColor;
         public Sprite CurrentSprite => _currentSprite;
         public int CurrentGroupId => _currentGroupId;
+        public Vector3 ObjectRendererWorldPosition => _objectRenderer != null ? _objectRenderer.transform.position : transform.position;
 
         private void Awake()
         {
             if (_backgroundRenderer == null)
                 _backgroundRenderer = GetComponent<SpriteRenderer>();
 
+            CaptureObjectRendererHomePosition();
             ApplyObjectSprite();
         }
         
@@ -47,6 +55,11 @@ namespace _Code.Field
 
         public void SetObject(GameObject obj, Color color, Sprite sprite, int groupId)
         {
+            SetObject(obj, color, sprite, groupId, null);
+        }
+
+        public void SetObject(GameObject obj, Color color, Sprite sprite, int groupId, Vector3? moveFromWorldPosition)
+        {
             _isHaveObject = true;
             _thisObject = obj;
             _currentColor = color;
@@ -59,6 +72,8 @@ namespace _Code.Field
             bool hasCatSprite = ApplyObjectSprite();
             _objectRenderer.color = hasCatSprite ? Color.white : color;
             _objectRenderer.enabled = true;
+
+            MoveObjectRenderer(moveFromWorldPosition);
         }
 
         public void ClearObject()
@@ -70,7 +85,11 @@ namespace _Code.Field
             _currentGroupId = -1;
 
             if (_objectRenderer != null)
+            {
+                StopObjectMove();
+                SnapObjectRendererToHome();
                 _objectRenderer.enabled = false;
+            }
         }
 
         public void Configure(Vector2Int point, SpriteRenderer backgroundRenderer, SpriteRenderer objectRenderer)
@@ -78,6 +97,8 @@ namespace _Code.Field
             Point = point;
             _backgroundRenderer = backgroundRenderer;
             _objectRenderer = objectRenderer;
+            _hasObjectRendererHomeLocalPosition = false;
+            CaptureObjectRendererHomePosition();
 
             ClearObject();
         }
@@ -97,6 +118,71 @@ namespace _Code.Field
 
             _objectRenderer.sprite = sprite;
             return true;
+        }
+
+        private void MoveObjectRenderer(Vector3? moveFromWorldPosition)
+        {
+            if (_objectRenderer == null)
+                return;
+
+            StopObjectMove();
+
+            Vector3 targetPosition = GetObjectRendererHomeWorldPosition();
+
+            if (!moveFromWorldPosition.HasValue || _objectMoveDuration <= 0f)
+            {
+                SnapObjectRendererToHome();
+                return;
+            }
+
+            Vector3 startPosition = moveFromWorldPosition.Value;
+            startPosition.z = targetPosition.z;
+            _objectRenderer.transform.position = startPosition;
+            _objectMoveTween = _objectRenderer.transform
+                .DOMove(targetPosition, _objectMoveDuration, false)
+                .SetEase(_objectMoveEase)
+                .OnComplete(SnapObjectRendererToHome);
+        }
+
+        private void StopObjectMove()
+        {
+            if (_objectMoveTween != null && _objectMoveTween.IsActive())
+                _objectMoveTween.Kill();
+
+            _objectMoveTween = null;
+
+            if (_objectRenderer != null)
+                _objectRenderer.transform.DOKill();
+        }
+
+        private void CaptureObjectRendererHomePosition()
+        {
+            if (_objectRenderer == null || _hasObjectRendererHomeLocalPosition)
+                return;
+
+            _objectRendererHomeLocalPosition = _objectRenderer.transform.localPosition;
+            _hasObjectRendererHomeLocalPosition = true;
+        }
+
+        private Vector3 GetObjectRendererHomeWorldPosition()
+        {
+            if (_objectRenderer == null)
+                return transform.position;
+
+            CaptureObjectRendererHomePosition();
+            Transform objectTransform = _objectRenderer.transform;
+            return objectTransform.parent != null
+                ? objectTransform.parent.TransformPoint(_objectRendererHomeLocalPosition)
+                : _objectRendererHomeLocalPosition;
+        }
+
+        private void SnapObjectRendererToHome()
+        {
+            if (_objectRenderer == null)
+                return;
+
+            CaptureObjectRendererHomePosition();
+            _objectRenderer.transform.localPosition = _objectRendererHomeLocalPosition;
         }
     }
 }

@@ -362,7 +362,7 @@ namespace _Code.Field
                 Vector2Int targetPoint = cell.Point + direction;
 
                 if (TryGetField(targetPoint, out Field field))
-                    field.SetObject(cell.Object, cell.Color, cell.Sprite, group.Id);
+                    field.SetObject(cell.Object, cell.Color, cell.Sprite, group.Id, cell.VisualWorldPosition);
             }
         }
 
@@ -399,12 +399,14 @@ namespace _Code.Field
                 Object = field.CurrentObject;
                 Color = field.CurrentColor;
                 Sprite = field.CurrentSprite;
+                VisualWorldPosition = field.ObjectRendererWorldPosition;
             }
 
             public Vector2Int Point { get; }
             public GameObject Object { get; }
             public Color Color { get; }
             public Sprite Sprite { get; }
+            public Vector3 VisualWorldPosition { get; }
         }
 
         private sealed class BlockGroup
