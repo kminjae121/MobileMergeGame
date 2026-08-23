@@ -215,20 +215,23 @@ namespace _Code.Manager
                 {
                     case 1:
                         Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.1f));
+                        Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Clear));
                         break;
                     case 2:
                         Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.2f));
+                        Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Clear));
                         break;
                     case 3:
                         Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.3f));
+                        Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Perfect));
                         break;
                     case 4:
                         Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.4f));
+                        Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Perfect));
                         break;
                 }
                 playerProgressController.AddScore(clearedLines * 100 + clearedLines * clearedLines * 50, false);
                 lineClearEffectPlayer.Play(clearedLines, _clearedBlockPositions, GetLineClearEffectColor(piece));
-                Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Clear));
             }
 
             if (hasValidationSnapshot)

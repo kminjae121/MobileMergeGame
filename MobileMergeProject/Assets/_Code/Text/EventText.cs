@@ -39,7 +39,7 @@ public class EventText : MonoBehaviour
         {
             eventTxt.DOKill();
             eventTxt.color = txt.TxtColor;
-            eventTxt.text = "";
+            eventTxt.text = string.Empty;
 
             eventTxt.DoText(txt.Text, 0.4f)
                 .OnComplete(() =>
