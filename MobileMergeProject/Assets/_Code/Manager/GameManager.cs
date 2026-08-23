@@ -3,10 +3,13 @@ using _Code.Block;
 using _Code.Effects;
 using _Code.Field;
 using _Code.Server;
+using _Code.SO;
 using Code.Core.Events.Bus;
+using Code.Core.Events.Bus.TextEvent;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem.LowLevel;
 using MouseView = _Code.Mouse.Mouse;
 using TutorialController = _Code.Manager.TutorialController;
 
@@ -225,6 +228,7 @@ namespace _Code.Manager
                 }
                 playerProgressController.AddScore(clearedLines * 100 + clearedLines * clearedLines * 50, false);
                 lineClearEffectPlayer.Play(clearedLines, _clearedBlockPositions, GetLineClearEffectColor(piece));
+                Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Clear));
             }
 
             if (hasValidationSnapshot)

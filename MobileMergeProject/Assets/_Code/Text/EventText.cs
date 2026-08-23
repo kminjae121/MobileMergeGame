@@ -16,7 +16,7 @@ public class EventText : MonoBehaviour
     [SerializeField] private TextMeshProUGUI eventTxt;
     [SerializeField] private List<TextSO> txtList;
 
-    private Dictionary<TextType, TextSO> txtDict;
+    private Dictionary<TextType, TextSO> txtDict = new();
 
     private void Awake()
     {
@@ -38,10 +38,14 @@ public class EventText : MonoBehaviour
         if (txtDict.TryGetValue(evt.TxtTypeType, out TextSO txt))
         {
             eventTxt.DOKill();
+            eventTxt.color = txt.TxtColor;
             eventTxt.text = "";
 
-            eventTxt.DoText(txt.Text, 0.8f)
-                .OnComplete(() => eventTxt.text = "");
+            eventTxt.DoText(txt.Text, 0.4f)
+                .OnComplete(() =>
+                {
+                    eventTxt.DOFade(0, 0.5f);
+                });
         }
     }
 }

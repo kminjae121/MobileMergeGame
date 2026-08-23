@@ -14,5 +14,6 @@ namespace _Code.SO
     {
         public TextType EventType;
         public string Text;
+        public Color TxtColor;
     }
 }
