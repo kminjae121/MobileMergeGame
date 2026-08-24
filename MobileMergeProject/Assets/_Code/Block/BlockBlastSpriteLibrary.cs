@@ -10,6 +10,11 @@ namespace _Code.Block
         private const string WhiteCatBlockSpritePath = "BlockBlast/WhiteCatBlockSprite";
         private const string SphynxCatBlockSpritePath = "BlockBlast/SphynxCatBlockSprite";
         private const string MouseSpritePath = "BlockBlast/MouseSprite";
+        private const string MouseIdleSpritePathPrefix = "BlockBlast/MouseIdle_";
+        private const string MouseMoveRightSpritePathPrefix = "BlockBlast/MouseMoveRight_";
+        private const string MouseMoveLeftSpritePathPrefix = "BlockBlast/MouseMoveLeft_";
+        private const string MouseMoveUpSpritePathPrefix = "BlockBlast/MouseMoveUp_";
+        private const string MouseMoveDownSpritePathPrefix = "BlockBlast/MouseMoveDown_";
         private const string CleanCatHomeBackgroundSpritePath = "BlockBlast/CleanCatHomeBackground";
         private const string NightCatHomeBackgroundSpritePath = "BlockBlast/NightCatHomeBackground";
         private const string CatTowerFrameSpritePath = "BlockBlast/CatTowerFrameSprite";
@@ -21,6 +26,11 @@ namespace _Code.Block
         private static Sprite _sphynxCatBlockSprite;
         private static Sprite[] _catBlockSprites;
         private static Sprite _mouseSprite;
+        private static Sprite[] _mouseIdleSprites;
+        private static Sprite[] _mouseMoveRightSprites;
+        private static Sprite[] _mouseMoveLeftSprites;
+        private static Sprite[] _mouseMoveUpSprites;
+        private static Sprite[] _mouseMoveDownSprites;
         private static Sprite _cleanCatHomeBackgroundSprite;
         private static Sprite _nightCatHomeBackgroundSprite;
         private static Sprite _catTowerFrameSprite;
@@ -29,6 +39,7 @@ namespace _Code.Block
         public static Sprite CatBlockSprite => CatBlockSprites.Length > 0 ? CatBlockSprites[0] : LoadSprite(CatBlockSpritePath, ref _catBlockSprite);
         public static Sprite[] CatBlockSprites => GetCatBlockSprites();
         public static Sprite MouseSprite => LoadSprite(MouseSpritePath, ref _mouseSprite);
+        public static Sprite[] MouseIdleSprites => LoadSpriteSequence(MouseIdleSpritePathPrefix, ref _mouseIdleSprites);
         public static Sprite CleanCatHomeBackgroundSprite => LoadSprite(CleanCatHomeBackgroundSpritePath, ref _cleanCatHomeBackgroundSprite);
         public static Sprite NightCatHomeBackgroundSprite => LoadSprite(NightCatHomeBackgroundSpritePath, ref _nightCatHomeBackgroundSprite) ?? CleanCatHomeBackgroundSprite;
         public static Sprite CatTowerFrameSprite => LoadSprite(CatTowerFrameSpritePath, ref _catTowerFrameSprite);
@@ -38,6 +49,22 @@ namespace _Code.Block
         {
             Sprite[] sprites = CatBlockSprites;
             return sprites.Length > 0 ? sprites[Random.Range(0, sprites.Length)] : null;
+        }
+
+        public static Sprite[] GetMouseMoveSprites(Vector2Int direction)
+        {
+            direction = NormalizeMouseDirection(direction);
+
+            if (direction == Vector2Int.right)
+                return LoadSpriteSequence(MouseMoveRightSpritePathPrefix, ref _mouseMoveRightSprites);
+
+            if (direction == Vector2Int.left)
+                return LoadSpriteSequence(MouseMoveLeftSpritePathPrefix, ref _mouseMoveLeftSprites);
+
+            if (direction == Vector2Int.up)
+                return LoadSpriteSequence(MouseMoveUpSpritePathPrefix, ref _mouseMoveUpSprites);
+
+            return LoadSpriteSequence(MouseMoveDownSpritePathPrefix, ref _mouseMoveDownSprites);
         }
 
         private static Sprite[] GetCatBlockSprites()
@@ -72,6 +99,39 @@ namespace _Code.Block
                 sprite = Resources.Load<Sprite>(path);
 
             return sprite;
+        }
+
+        private static Sprite[] LoadSpriteSequence(string pathPrefix, ref Sprite[] sprites)
+        {
+            if (sprites != null)
+                return sprites;
+
+            List<Sprite> loadedSprites = new List<Sprite>();
+
+            for (int i = 0; i < 4; i++)
+            {
+                Sprite sprite = Resources.Load<Sprite>($"{pathPrefix}{i}");
+
+                if (sprite != null)
+                    loadedSprites.Add(sprite);
+            }
+
+            if (loadedSprites.Count == 0 && MouseSprite != null)
+                loadedSprites.Add(MouseSprite);
+
+            sprites = loadedSprites.ToArray();
+            return sprites;
+        }
+
+        private static Vector2Int NormalizeMouseDirection(Vector2Int direction)
+        {
+            if (direction == Vector2Int.zero)
+                return Vector2Int.down;
+
+            if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+                return direction.x > 0 ? Vector2Int.right : Vector2Int.left;
+
+            return direction.y > 0 ? Vector2Int.up : Vector2Int.down;
         }
     }
 }

@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using _Code.Block;
 using _Code.Field;
+using _Code.SO;
+using Code.Core.Events.Bus;
+using Code.Core.Events.Bus.TextEvent;
 using UnityEngine;
 using MouseView = _Code.Mouse.Mouse;
 
@@ -63,6 +66,26 @@ namespace _Code.Manager
             int clearedLines = blockField.ClearCompletedLines(clearedWorldPositions);
             bool hasAnyRemainingPlacement = randomBlockManager.HasAnyAvailablePlacement(blockField);
             result = new BoardShiftResult(moved, clearedLines, hasAnyRemainingPlacement);
+            
+            switch (clearedLines)
+            {
+                case 1:
+                    Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.1f));
+                    Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Clear));
+                    break;
+                case 2:
+                    Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.2f));
+                    Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Double));
+                    break;
+                case 3:
+                    Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.3f));
+                    Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Tripple));
+                    break;
+                case 4:
+                    Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.4f));
+                    Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Quadra));
+                    break;
+            }
             return true;
         }
 

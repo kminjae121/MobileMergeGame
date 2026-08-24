@@ -219,15 +219,15 @@ namespace _Code.Manager
                         break;
                     case 2:
                         Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.2f));
-                        Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Clear));
+                        Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Double));
                         break;
                     case 3:
                         Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.3f));
-                        Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Perfect));
+                        Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Tripple));
                         break;
                     case 4:
                         Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.4f));
-                        Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Perfect));
+                        Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Quadra));
                         break;
                 }
                 playerProgressController.AddScore(clearedLines * 100 + clearedLines * clearedLines * 50, false);

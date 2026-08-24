@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace _Code.SO
@@ -5,9 +6,11 @@ namespace _Code.SO
     public enum TextType
     {
         Clear,
-        Perfect,
         Double,
-        Tripple
+        Tripple,
+        Quadra,
+        
+        
     }
     [CreateAssetMenu(fileName = "Event/Text", menuName = "Event/Text", order = 0)]
     public class TextSO : ScriptableObject
@@ -15,5 +18,11 @@ namespace _Code.SO
         public TextType EventType;
         public string Text;
         public Color TxtColor;
+
+        private void OnValidate()
+        {
+            if (TxtColor.a <= 0)
+                TxtColor.a = 1;
+        }
     }
 }

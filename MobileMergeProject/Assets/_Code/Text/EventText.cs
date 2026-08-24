@@ -16,13 +16,19 @@ public class EventText : MonoBehaviour
     [SerializeField] private TextMeshProUGUI eventTxt;
     [SerializeField] private List<TextSO> txtList;
 
-    private Dictionary<TextType, TextSO> txtDict = new();
+    private Dictionary<TextType, TextSO> _txtDict = new();
 
     private void Awake()
     {
+        if (txtList.Count <= 0)
+        {
+            Debug.LogError("TextList is Empty");
+            return;
+        }
+        
         foreach (var txt in txtList)
         {
-            txtDict.Add(txt.EventType, txt);
+            _txtDict.Add(txt.EventType, txt);
         }
         
         Bus<EventTxtEvent>.Subscribe(EnterTxt);
@@ -35,7 +41,7 @@ public class EventText : MonoBehaviour
 
     private void EnterTxt(EventTxtEvent evt)
     {
-        if (txtDict.TryGetValue(evt.TxtTypeType, out TextSO txt))
+        if (_txtDict.TryGetValue(evt.TxtTypeType, out TextSO txt))
         {
             eventTxt.DOKill();
             eventTxt.color = txt.TxtColor;

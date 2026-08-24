@@ -159,7 +159,7 @@ namespace _Code.Block
                     else
                         MoveDrag(touch.position);
 
-                return;
+                    return;
                 }
 
                 EndDrag();

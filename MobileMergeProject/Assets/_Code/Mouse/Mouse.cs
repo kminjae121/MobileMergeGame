@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Serialization;
 using _Code.Block;
@@ -21,6 +22,12 @@ namespace _Code.Mouse
         [SerializeField, Min(0f)] private float _cornerVerticalPadding = 1.06f;
         [SerializeField, FormerlySerializedAs("_cushionCenterYOffset")] private float _positionYOffset;
         [SerializeField] private SpriteRenderer _renderer;
+        [SerializeField, Min(0.01f)] private float _moveDuration = 0.2f;
+        [SerializeField, Min(0.01f)] private float _moveAnimationFrameDuration = 0.05f;
+        [SerializeField, Min(0.01f)] private float _idleAnimationFrameDuration = 0.16f;
+
+        private Coroutine _moveAnimationRoutine;
+        private Coroutine _idleAnimationRoutine;
 
         private void Awake()
         {
@@ -28,21 +35,31 @@ namespace _Code.Mouse
                 _renderer = GetComponent<SpriteRenderer>();
 
             ApplySprite();
+            PlayIdleAnimation();
+        }
+
+        private void OnDisable()
+        {
+            StopMoveAnimation();
+            StopIdleAnimation();
+            transform.DOKill();
         }
 
         public void Initialize(BlockField blockField)
         {
             ApplySprite();
-            ApplyPosition(blockField);
+            ApplyPosition(blockField, Vector2Int.zero, true);
         }
 
         public bool TryMove(Vector2Int direction, BlockField blockField)
         {
-            if (!TryGetNextCorner(direction, out Corner nextCorner))
+            Vector2Int moveDirection = NormalizeDirection(direction);
+
+            if (!TryGetNextCorner(moveDirection, out Corner nextCorner))
                 return false;
 
             _corner = nextCorner;
-            ApplyPosition(blockField);
+            ApplyPosition(blockField, moveDirection);
             return true;
         }
 
@@ -123,11 +140,20 @@ namespace _Code.Mouse
             }
         }
 
-        private void ApplyPosition(BlockField blockField)
+        private void ApplyPosition(BlockField blockField, Vector2Int moveDirection, bool snap = false)
         {
+            StopMoveAnimation();
+            StopIdleAnimation();
             transform.DOKill();
+
+            if (_renderer != null)
+                _renderer.color = Color.white;
+
             if (blockField == null)
+            {
+                PlayIdleAnimation();
                 return;
+            }
 
             Vector3 bottomLeft = blockField.GetWorldPosition(Vector2Int.zero);
             Vector3 topRight = blockField.GetWorldPosition(new Vector2Int(blockField.Width - 1, blockField.Height - 1));
@@ -160,7 +186,17 @@ namespace _Code.Mouse
                     break;
             }
 
-            transform.DOMove(position, 0.2f, false).SetEase(Ease.Linear);
+            if (snap)
+            {
+                transform.position = position;
+                PlayIdleAnimation();
+                return;
+            }
+
+            PlayMoveAnimation(moveDirection);
+            transform.DOMove(position, _moveDuration, false)
+                .SetEase(Ease.Linear)
+                .OnComplete(PlayIdleAnimation);
         }
 
         private void ApplySprite()
@@ -170,6 +206,90 @@ namespace _Code.Mouse
 
             _renderer.sprite = BlockBlastSpriteLibrary.MouseSprite;
             _renderer.color = Color.white;
+        }
+
+        private void PlayMoveAnimation(Vector2Int direction)
+        {
+            if (_renderer == null)
+                return;
+
+            _moveAnimationRoutine = StartCoroutine(AnimateMoveSprites(direction));
+        }
+
+        private IEnumerator AnimateMoveSprites(Vector2Int direction)
+        {
+            Sprite[] sprites = BlockBlastSpriteLibrary.GetMouseMoveSprites(direction);
+
+            if (sprites == null || sprites.Length == 0)
+            {
+                _moveAnimationRoutine = null;
+                yield break;
+            }
+
+            float elapsed = 0f;
+            int frameIndex = 0;
+
+            while (elapsed < _moveDuration)
+            {
+                _renderer.sprite = sprites[frameIndex % sprites.Length];
+                frameIndex++;
+
+                yield return new WaitForSeconds(_moveAnimationFrameDuration);
+                elapsed += _moveAnimationFrameDuration;
+            }
+
+            _moveAnimationRoutine = null;
+        }
+
+        private void StopMoveAnimation()
+        {
+            if (_moveAnimationRoutine == null)
+                return;
+
+            StopCoroutine(_moveAnimationRoutine);
+            _moveAnimationRoutine = null;
+        }
+
+        private void PlayIdleAnimation()
+        {
+            if (_renderer == null)
+                return;
+
+            if (_idleAnimationRoutine != null)
+                return;
+
+            _idleAnimationRoutine = StartCoroutine(AnimateIdleSprites());
+        }
+
+        private IEnumerator AnimateIdleSprites()
+        {
+            Sprite[] sprites = BlockBlastSpriteLibrary.MouseIdleSprites;
+
+            if (sprites == null || sprites.Length == 0)
+            {
+                ApplySprite();
+                _idleAnimationRoutine = null;
+                yield break;
+            }
+
+            int frameIndex = 0;
+
+            while (true)
+            {
+                _renderer.sprite = sprites[frameIndex % sprites.Length];
+                frameIndex++;
+
+                yield return new WaitForSeconds(_idleAnimationFrameDuration);
+            }
+        }
+
+        private void StopIdleAnimation()
+        {
+            if (_idleAnimationRoutine == null)
+                return;
+
+            StopCoroutine(_idleAnimationRoutine);
+            _idleAnimationRoutine = null;
         }
 
         private static Vector2Int NormalizeDirection(Vector2Int direction)

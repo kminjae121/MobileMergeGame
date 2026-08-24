@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Clear
   m_EditorClassIdentifier: Assembly-CSharp::_Code.SO.TextSO
   EventType: 0
-  Text: CLEAR!
+  Text: Catch
   TxtColor: {r: 1, g: 0.8959342, b: 0, a: 1}
