@@ -18,8 +18,8 @@ namespace _Code.Mouse
         }
 
         [SerializeField] private Corner _corner = Corner.TopLeft;
-        [SerializeField, Min(0f), FormerlySerializedAs("_cornerPadding")] private float _cornerHorizontalPadding = 1.08f;
-        [SerializeField, Min(0f)] private float _cornerVerticalPadding = 1.06f;
+        [SerializeField, Min(0f), FormerlySerializedAs("_cornerPadding")] private float _cornerHorizontalPadding = 0.84f;
+        [SerializeField, Min(0f)] private float _cornerVerticalPadding = 0.84f;
         [SerializeField, FormerlySerializedAs("_cushionCenterYOffset")] private float _positionYOffset;
         [SerializeField] private SpriteRenderer _renderer;
         [SerializeField, Min(0.01f)] private float _moveDuration = 0.2f;

@@ -86,9 +86,9 @@ namespace _Code.Manager
                 return;
             }
 
-            //bool tutorialStarted = tutorialController != null && tutorialController.TryBegin(stageModeController.IsStageMode);
-            //if (!tutorialStarted)
-            //    SetMessage(stageModeController.GetStartMessage());
+            bool tutorialStarted = tutorialController != null && tutorialController.TryBegin(stageModeController.IsStageMode);
+            if (!tutorialStarted)
+                SetMessage(stageModeController.GetStartMessage());
         }
 
         private void Update()
@@ -116,7 +116,7 @@ namespace _Code.Manager
             if (_isGameOver || tutorialController == null)
                 return;
 
-            //tutorialController.BeginManually();
+            tutorialController.BeginManually();
         }
 
         private void ResolveSceneReferences()
@@ -172,7 +172,7 @@ namespace _Code.Manager
             boardShiftController.Configure(blockField, randomBlockManager, mouse, swipeMinDistance, enableKeyboardInput);
             lineClearEffectPlayer.Configure(hapticFeedback, lineClearParticleEffect);
             placementScoreGuard.Configure(jsonManager, serverScoreClient, resetSceneName);
-            //tutorialController.Configure(messageText);
+            tutorialController.Configure(messageText);
         }
 
         private T GetOrAdd<T>() where T : Component
@@ -245,6 +245,7 @@ namespace _Code.Manager
             }
 
             piece.MarkPlaced();
+            tutorialController?.NotifyPiecePlaced();
 
             if (TryCompleteStage())
                 return;
@@ -269,11 +270,11 @@ namespace _Code.Manager
             if (boardShiftController == null ||
                 !boardShiftController.TryShift(direction, _clearedBlockPositions, out BoardShiftController.BoardShiftResult result))
             {
-                //tutorialController?.NotifyBoardShiftFailed(direction);
+                tutorialController?.NotifyBoardShiftFailed(direction);
                 return false;
             }
 
-            //tutorialController?.NotifyBoardShiftSucceeded(direction);
+            tutorialController?.NotifyBoardShiftSucceeded(direction);
 
             if (result.ClearedLines > 0)
             {
@@ -290,8 +291,8 @@ namespace _Code.Manager
                 return true;
             }
 
-            //if (tutorialController == null || !tutorialController.HasPriorityMessage)
-            //    SetMessage(result.HasVisibleChange ? "Shift" : string.Empty);
+            if (tutorialController == null || !tutorialController.HasPriorityMessage)
+                SetMessage(result.HasVisibleChange ? "Shift" : string.Empty);
 
             return true;
         }
