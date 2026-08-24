@@ -58,7 +58,7 @@ namespace _Code.Manager
 
             if (blockField == null || randomBlockManager == null)
                 return false;
-
+    
             if (mouse != null && !mouse.TryMove(direction, blockField))
                 return false;
 
