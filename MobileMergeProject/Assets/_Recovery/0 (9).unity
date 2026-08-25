@@ -1046,6 +1046,8 @@ MonoBehaviour:
   googleSignInTokenProvider: {fileID: 1678449954}
   maxScoreTxt: {fileID: 2113876899}
   goldTxt: {fileID: 5100001003}
+  autoGoogleLoginOnStart: 1
+  autoGoogleLoginDelay: 0.2
 --- !u!114 &1678449950
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1339,8 +1341,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -7096594708724000889, guid: c47fd7da02dbcca4b9a84e1bd7ef7bee, type: 3}
-  m_Type: 0
+  m_Sprite: {fileID: 21300000, guid: c47fd7da02dbcca4b9a84e1bd7ef7bee, type: 3}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4

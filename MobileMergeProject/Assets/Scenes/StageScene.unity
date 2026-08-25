@@ -753,8 +753,6 @@ MonoBehaviour:
   googleSignInTokenProvider: {fileID: 0}
   maxScoreTxt: {fileID: 2113876899}
   goldTxt: {fileID: 0}
-  autoGoogleLoginOnStart: 1
-  autoGoogleLoginDelay: 0.2
 --- !u!114 &1678449950
 MonoBehaviour:
   m_ObjectHideFlags: 0

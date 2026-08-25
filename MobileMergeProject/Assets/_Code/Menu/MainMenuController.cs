@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using _Code.Auth;
 using _Code.Manager;
 using _Code.Server;
@@ -24,10 +22,6 @@ namespace _Code.Menu
         [SerializeField] private GoogleSignInTokenProvider googleSignInTokenProvider;
         [SerializeField] private TextMeshProUGUI maxScoreTxt;
         [SerializeField] private TextMeshProUGUI goldTxt;
-        [SerializeField] private bool autoGoogleLoginOnStart = true;
-        [SerializeField, Min(0f)] private float autoGoogleLoginDelay = 0.2f;
-
-        private bool _autoGoogleLoginStarted;
 
         private void Awake()
         {
@@ -59,15 +53,6 @@ namespace _Code.Menu
         private void Start()
         {
             UpdateGameStartState();
-
-            if (!autoGoogleLoginOnStart)
-                return;
-
-#if UNITY_EDITOR
-            return;
-#else
-            StartCoroutine(AutoGoogleLoginRoutine());
-#endif
         }
 
         private void OnDestroy()
@@ -182,25 +167,6 @@ namespace _Code.Menu
             googleSignInTokenProvider.SignIn();
         }
 
-        private IEnumerator AutoGoogleLoginRoutine()
-        {
-            if (_autoGoogleLoginStarted)
-                yield break;
-
-            _autoGoogleLoginStarted = true;
-
-            if (autoGoogleLoginDelay > 0f)
-                yield return new WaitForSeconds(autoGoogleLoginDelay);
-
-            if (googleSignInTokenProvider == null)
-            {
-                Debug.LogWarning("Google sign-in token provider is missing.");
-                yield break;
-            }
-
-            googleSignInTokenProvider.SignInAutomatically();
-        }
-
         private void HandleLoggedIn()
         {
             UpdateGameStartState();
@@ -212,8 +178,7 @@ namespace _Code.Menu
             if (PlayerIdProvider.CanPlay)
                 return true;
 
-            Debug.LogWarning("로그인 전에는 게임을 시작할 수 없습니다.");
-            StartGoogleLogin();
+            Debug.LogWarning("로그인은 메인 화면의 구글 로그인 버튼으로만 할 수 있습니다.");
             return false;
         }
 

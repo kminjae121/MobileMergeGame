@@ -65,22 +65,6 @@ namespace _Code.Auth
 #endif
         }
 
-        public void SignInAutomatically()
-        {
-#if CATBLAST_GOOGLE_SIGN_IN
-#if UNITY_EDITOR
-            Debug.Log("Google automatic sign-in is enabled. Build and Run on an Android device to test Google login.");
-#else
-            if (!TryPrepareSignIn())
-                return;
-
-            GoogleSignIn.DefaultInstance.SignInSilently().ContinueWith(HandleSilentSignInFinished);
-#endif
-#else
-            Debug.LogWarning("Google Sign-In SDK is not enabled. Import the SDK and add CATBLAST_GOOGLE_SIGN_IN to Scripting Define Symbols.");
-#endif
-        }
-
 #if CATBLAST_GOOGLE_SIGN_IN
 #if !UNITY_EDITOR
         private bool TryPrepareSignIn()
@@ -114,23 +98,6 @@ namespace _Code.Auth
             GoogleSignIn.Configuration = _configuration;
             _isSignInRunning = true;
             return true;
-        }
-
-        private void HandleSilentSignInFinished(Task<GoogleSignInUser> task)
-        {
-            EnqueueOnMainThread(() =>
-            {
-                _isSignInRunning = false;
-
-                if (!task.IsCanceled && !task.IsFaulted)
-                {
-                    loginManager.LoginWithGoogleIdToken(task.Result.IdToken);
-                    return;
-                }
-
-                Debug.Log("Google silent sign-in failed. Trying interactive sign-in.");
-                SignIn();
-            });
         }
 #endif
 
