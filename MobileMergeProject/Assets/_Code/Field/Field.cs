@@ -17,6 +17,7 @@ namespace _Code.Field
         private Color _currentColor = Color.white;
         private Sprite _currentSprite;
         private int _currentGroupId = -1;
+        private bool _isStageCheese;
         private Vector3 _objectRendererHomeLocalPosition;
         private bool _hasObjectRendererHomeLocalPosition;
         private Tween _objectMoveTween;
@@ -27,6 +28,7 @@ namespace _Code.Field
         public Color CurrentColor => _currentColor;
         public Sprite CurrentSprite => _currentSprite;
         public int CurrentGroupId => _currentGroupId;
+        public bool IsStageCheese => _isStageCheese;
         public Vector3 ObjectRendererWorldPosition => _objectRenderer != null ? _objectRenderer.transform.position : transform.position;
 
         private void Awake()
@@ -60,11 +62,22 @@ namespace _Code.Field
 
         public void SetObject(GameObject obj, Color color, Sprite sprite, int groupId, Vector3? moveFromWorldPosition)
         {
+            SetObject(obj, color, sprite, groupId, moveFromWorldPosition, false);
+        }
+
+        public void SetStageCheeseObject(GameObject obj, Sprite sprite, int groupId)
+        {
+            SetObject(obj, Color.white, sprite, groupId, null, true);
+        }
+
+        private void SetObject(GameObject obj, Color color, Sprite sprite, int groupId, Vector3? moveFromWorldPosition, bool isStageCheese)
+        {
             _isHaveObject = true;
             _thisObject = obj;
             _currentColor = color;
             _currentSprite = sprite != null ? sprite : BlockBlastSpriteLibrary.CatBlockSprite;
             _currentGroupId = groupId;
+            _isStageCheese = isStageCheese;
 
             if (_objectRenderer == null)
                 return;
@@ -83,6 +96,7 @@ namespace _Code.Field
             _currentColor = Color.white;
             _currentSprite = null;
             _currentGroupId = -1;
+            _isStageCheese = false;
 
             if (_objectRenderer != null)
             {

@@ -186,9 +186,15 @@ namespace _Code.Field
 
         public int ClearCompletedLines(ICollection<Vector3> clearedWorldPositions)
         {
+            return ClearCompletedLines(clearedWorldPositions, null);
+        }
+
+        public int ClearCompletedLines(ICollection<Vector3> clearedWorldPositions, ICollection<Vector2Int> clearedPoints)
+        {
             HashSet<Field> fieldsToClear = new HashSet<Field>();
             int clearedLineCount = 0;
             clearedWorldPositions?.Clear();
+            clearedPoints?.Clear();
 
             for (int y = 0; y < _height; y++)
             {
@@ -213,6 +219,7 @@ namespace _Code.Field
             foreach (Field field in fieldsToClear)
             {
                 clearedWorldPositions?.Add(field.transform.position);
+                clearedPoints?.Add(field.Point);
                 field.ClearObject();
             }
 
@@ -289,7 +296,7 @@ namespace _Code.Field
 
             foreach (Field field in _fields)
             {
-                if (field.IsEmpty || visited.Contains(field.Point))
+                if (field.IsEmpty || field.IsStageCheese || visited.Contains(field.Point))
                     continue;
 
                 groups.Add(BuildConnectedGroup(field, visited));

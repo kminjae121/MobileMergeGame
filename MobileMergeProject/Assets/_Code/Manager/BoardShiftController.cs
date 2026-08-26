@@ -52,9 +52,15 @@ namespace _Code.Manager
             return _swipeInputReader.TryReadDirection(swipeMinDistance, enableKeyboardInput, out direction);
         }
 
-        public bool TryShift(Vector2Int direction, ICollection<Vector3> clearedWorldPositions, out BoardShiftResult result)
+        public bool TryShift(
+            Vector2Int direction,
+            ICollection<Vector3> clearedWorldPositions,
+            ICollection<Vector2Int> clearedPoints,
+            out BoardShiftResult result)
         {
             result = default;
+            clearedWorldPositions?.Clear();
+            clearedPoints?.Clear();
 
             if (blockField == null || randomBlockManager == null)
                 return false;
@@ -63,7 +69,7 @@ namespace _Code.Manager
                 return false;
 
             bool moved = blockField.Compact(direction);
-            int clearedLines = blockField.ClearCompletedLines(clearedWorldPositions);
+            int clearedLines = blockField.ClearCompletedLines(clearedWorldPositions, clearedPoints);
             bool hasAnyRemainingPlacement = randomBlockManager.HasAnyAvailablePlacement(blockField);
             result = new BoardShiftResult(moved, clearedLines, hasAnyRemainingPlacement);
             

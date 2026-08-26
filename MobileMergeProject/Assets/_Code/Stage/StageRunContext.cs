@@ -1,5 +1,7 @@
 namespace _Code.Stage
 {
+    using UnityEngine.SceneManagement;
+
     public static class StageRunContext
     {
         public static int SelectedStageNumber { get; private set; }
@@ -22,6 +24,12 @@ namespace _Code.Stage
 
         public static bool TryGetSelectedStage(out StageDefinition stage)
         {
+            if (StageCatalog.TryGetStageNumberFromSceneName(SceneManager.GetActiveScene().name, out int stageNumber))
+            {
+                SelectStage(stageNumber);
+                return StageCatalog.TryGetStage(SelectedStageNumber, out stage);
+            }
+
             return StageCatalog.TryGetStage(SelectedStageNumber, out stage);
         }
     }

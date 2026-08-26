@@ -68,6 +68,28 @@ namespace _Code.Mouse
             return TryGetNextCorner(direction, out _);
         }
 
+        public bool TryGetMoveGuideWorldPositions(
+            Vector2Int direction,
+            BlockField blockField,
+            out Vector3 fromPosition,
+            out Vector3 toPosition)
+        {
+            fromPosition = transform.position;
+            toPosition = transform.position;
+
+            if (blockField == null)
+                return false;
+
+            Vector2Int moveDirection = NormalizeDirection(direction);
+
+            if (!TryGetNextCorner(moveDirection, out Corner nextCorner))
+                return false;
+
+            fromPosition = GetCornerWorldPosition(_corner, blockField);
+            toPosition = GetCornerWorldPosition(nextCorner, blockField);
+            return true;
+        }
+
         private bool TryGetNextCorner(Vector2Int direction, out Corner nextCorner)
         {
             direction = NormalizeDirection(direction);
@@ -155,6 +177,26 @@ namespace _Code.Mouse
                 return;
             }
 
+            Vector3 position = GetCornerWorldPosition(_corner, blockField);
+
+            if (snap)
+            {
+                transform.position = position;
+                PlayIdleAnimation();
+                return;
+            }
+
+            PlayMoveAnimation(moveDirection);
+            transform.DOMove(position, _moveDuration, false)
+                .SetEase(Ease.Linear)
+                .OnComplete(PlayIdleAnimation);
+        }
+
+        private Vector3 GetCornerWorldPosition(Corner corner, BlockField blockField)
+        {
+            if (blockField == null)
+                return transform.position;
+
             Vector3 bottomLeft = blockField.GetWorldPosition(Vector2Int.zero);
             Vector3 topRight = blockField.GetWorldPosition(new Vector2Int(blockField.Width - 1, blockField.Height - 1));
             float left = bottomLeft.x - _cornerHorizontalPadding;
@@ -163,7 +205,7 @@ namespace _Code.Mouse
             float top = topRight.y + _cornerVerticalPadding + _positionYOffset;
             Vector3 position = transform.position;
 
-            switch (_corner)
+            switch (corner)
             {
                 case Corner.TopLeft:
                     position.x = left;
@@ -186,17 +228,7 @@ namespace _Code.Mouse
                     break;
             }
 
-            if (snap)
-            {
-                transform.position = position;
-                PlayIdleAnimation();
-                return;
-            }
-
-            PlayMoveAnimation(moveDirection);
-            transform.DOMove(position, _moveDuration, false)
-                .SetEase(Ease.Linear)
-                .OnComplete(PlayIdleAnimation);
+            return position;
         }
 
         private void ApplySprite()

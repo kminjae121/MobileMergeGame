@@ -327,7 +327,7 @@ namespace _Code.Server
             if (_logConnectionFailure && !_hasLoggedConnectionFailure)
             {
                 _hasLoggedConnectionFailure = true;
-                Debug.Log("\uC11C\uBC84 \uC5F0\uACB0\uC548\uB428");
+                Debug.Log("\uC11C\uBC84 \uC5F0\uACB0\uC548\uB428 Json으로 저장시작.");
             }
 
             if (_logConnectionFailures)

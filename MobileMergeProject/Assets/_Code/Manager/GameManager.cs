@@ -10,6 +10,7 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.SceneManagement;
 using MouseView = _Code.Mouse.Mouse;
 using TutorialController = _Code.Manager.TutorialController;
 
@@ -44,6 +45,7 @@ namespace _Code.Manager
         [SerializeField] private TutorialController tutorialController;
 
         private readonly List<Vector3> _clearedBlockPositions = new List<Vector3>(36);
+        private readonly List<Vector2Int> _clearedBlockPoints = new List<Vector2Int>(36);
         private bool _isGameOver;
 
         private static readonly Color BlackCatEffectColor = new Color(0.08f, 0.08f, 0.08f, 1f);
@@ -77,7 +79,7 @@ namespace _Code.Manager
                 mouse.Initialize(blockField);
 
             SubscribePieces();
-            playerProgressController.Initialize(stageModeController.IsStageMode, stageModeController.TargetScore);
+            playerProgressController.Initialize(stageModeController.HasScoreGoal, stageModeController.TargetScore);
             gameOverView?.Hide();
 
             if (!randomBlockManager.GiveNewSet(blockField))
@@ -172,7 +174,7 @@ namespace _Code.Manager
             boardShiftController.Configure(blockField, randomBlockManager, mouse, swipeMinDistance, enableKeyboardInput);
             lineClearEffectPlayer.Configure(hapticFeedback, lineClearParticleEffect);
             placementScoreGuard.Configure(jsonManager, serverScoreClient, resetSceneName);
-            tutorialController.Configure(messageText);
+            tutorialController.Configure(messageText, blockField, mouse, pieces);
         }
 
         private T GetOrAdd<T>() where T : Component
@@ -208,7 +210,8 @@ namespace _Code.Manager
 
             playerProgressController.AddScore(piece.CellCount * 10, false);
 
-            int clearedLines = blockField.ClearCompletedLines(_clearedBlockPositions);
+            int clearedLines = blockField.ClearCompletedLines(_clearedBlockPositions, _clearedBlockPoints);
+            stageModeController.NotifyClearedPoints(_clearedBlockPoints);
             if (clearedLines > 0)
             {
                 switch (clearedLines)
@@ -245,9 +248,13 @@ namespace _Code.Manager
             }
 
             piece.MarkPlaced();
+            stageModeController?.NotifyPiecePlaced();
             tutorialController?.NotifyPiecePlaced();
 
             if (TryCompleteStage())
+                return;
+
+            if (TryFailStage())
                 return;
 
             if (randomBlockManager.AreAllPiecesPlaced() && !randomBlockManager.GiveNewSet(blockField))
@@ -262,19 +269,22 @@ namespace _Code.Manager
                 return;
             }
 
-            SetMessage(string.Empty);
+            SetMessage(stageModeController != null && stageModeController.IsStageMode
+                ? stageModeController.GetStartMessage()
+                : string.Empty);
         }
 
         private bool ShiftBoard(Vector2Int direction)
         {
             if (boardShiftController == null ||
-                !boardShiftController.TryShift(direction, _clearedBlockPositions, out BoardShiftController.BoardShiftResult result))
+                !boardShiftController.TryShift(direction, _clearedBlockPositions, _clearedBlockPoints, out BoardShiftController.BoardShiftResult result))
             {
                 tutorialController?.NotifyBoardShiftFailed(direction);
                 return false;
             }
 
             tutorialController?.NotifyBoardShiftSucceeded(direction);
+            stageModeController.NotifyClearedPoints(_clearedBlockPoints);
 
             if (result.ClearedLines > 0)
             {
@@ -292,7 +302,9 @@ namespace _Code.Manager
             }
 
             if (tutorialController == null || !tutorialController.HasPriorityMessage)
-                SetMessage(result.HasVisibleChange ? "Shift" : string.Empty);
+                SetMessage(stageModeController != null && stageModeController.IsStageMode
+                    ? stageModeController.GetStartMessage()
+                    : result.HasVisibleChange ? "Shift" : string.Empty);
 
             return true;
         }
@@ -327,6 +339,15 @@ namespace _Code.Manager
                 return false;
 
             CompleteStage();
+            return true;
+        }
+
+        private bool TryFailStage()
+        {
+            if (_isGameOver || stageModeController == null || !stageModeController.IsFailedByPlacementLimit)
+                return false;
+
+            EndGame();
             return true;
         }
 
@@ -372,10 +393,16 @@ namespace _Code.Manager
             _isGameOver = true;
             placementPreview?.Hide();
             playerProgressController.TryUpdateMaxScore(true);
+            stageModeController?.MarkCleared();
             SetMessage(stageModeController.GetClearMessage());
 
             if (gameOverView != null)
-                gameOverView.ShowStageClear(playerProgressController.Score, playerProgressController.MaxScore);
+                gameOverView.ShowStageClearPrompt(
+                    playerProgressController.Score,
+                    playerProgressController.MaxScore,
+                    stageModeController.GetNextSceneNameAfterClear());
+            else
+                SceneManager.LoadScene(stageModeController.StageSelectSceneName);
         }
 
         private void EndGame()
@@ -385,7 +412,12 @@ namespace _Code.Manager
             playerProgressController.TryUpdateMaxScore(true);
             SetMessage(string.Empty);
 
-            if (gameOverView != null)
+            if (gameOverView != null && stageModeController != null && stageModeController.IsStageMode)
+                gameOverView.ShowStageFailed(
+                    playerProgressController.Score,
+                    playerProgressController.MaxScore,
+                    stageModeController.StageSelectSceneName);
+            else if (gameOverView != null)
                 gameOverView.Show(playerProgressController.Score, playerProgressController.MaxScore);
             else
                 SetMessage("Game Over");

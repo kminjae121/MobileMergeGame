@@ -8,12 +8,43 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/MainScene.unity
     guid: 128e9f323034d9947bb4557275adaba4
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/StageScene.unity
     guid: 5d8e67d54194459e9bf9072d2a263f52
   - enabled: 1
     path: Assets/Scenes/GameScene.unity
     guid: b951210417c8c5a478e705af399e39ff
+  - enabled: 1
+    path: Assets/Scenes/Stage1Scene.unity
+    guid: b7e7e134c73d4fee89459f0d89679567
+  - enabled: 1
+    path: Assets/Scenes/Stage2Scene.unity
+    guid: 89a896debc1645acaeb05660275452cd
+  - enabled: 1
+    path: Assets/Scenes/Stage3Scene.unity
+    guid: bf43d991e09d49f986bd051e02613060
+  - enabled: 1
+    path: Assets/Scenes/Stage4Scene.unity
+    guid: 3f024e978c2d436ba6e39f90fc9209cd
+  - enabled: 1
+    path: Assets/Scenes/Stage5Scene.unity
+    guid: c4e4a97c0f604804a54585301e7b020f
+  - enabled: 1
+    path: Assets/Scenes/Stage6Scene.unity
+    guid: c17cfceb81de437a9e3ff89dc1e501d1
+  - enabled: 1
+    path: Assets/Scenes/Stage7Scene.unity
+    guid: fb7e187a0ec64be59802019990bb0f37
+  - enabled: 1
+    path: Assets/Scenes/Stage8Scene.unity
+    guid: 3ffdac21a037486ba4f0b4c0525d01fd
+  - enabled: 1
+    path: Assets/Scenes/Stage9Scene.unity
+    guid: 4c7fabc4748f4539987af8bfd1a298a1
+  - enabled: 1
+    path: Assets/Scenes/Stage10Scene.unity
+    guid: fbb80e26f66c433fa0c557dcad0908d0
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
+

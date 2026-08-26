@@ -9,6 +9,7 @@ namespace _Code.Block
         private const string BlackCatBlockSpritePath = "BlockBlast/BlackCatBlockSprite";
         private const string WhiteCatBlockSpritePath = "BlockBlast/WhiteCatBlockSprite";
         private const string SphynxCatBlockSpritePath = "BlockBlast/SphynxCatBlockSprite";
+        private const string CheeseBlockSpritePath = "BlockBlast/CheeseBlockSprite";
         private const string MouseSpritePath = "BlockBlast/MouseSprite";
         private const string MouseIdleSpritePathPrefix = "BlockBlast/MouseIdle_";
         private const string MouseMoveRightSpritePathPrefix = "BlockBlast/MouseMoveRight_";
@@ -24,6 +25,7 @@ namespace _Code.Block
         private static Sprite _blackCatBlockSprite;
         private static Sprite _whiteCatBlockSprite;
         private static Sprite _sphynxCatBlockSprite;
+        private static Sprite _cheeseBlockSprite;
         private static Sprite[] _catBlockSprites;
         private static Sprite _mouseSprite;
         private static Sprite[] _mouseIdleSprites;
@@ -37,6 +39,7 @@ namespace _Code.Block
         private static Sprite _mouseHoleFrameSprite;
 
         public static Sprite CatBlockSprite => CatBlockSprites.Length > 0 ? CatBlockSprites[0] : LoadSprite(CatBlockSpritePath, ref _catBlockSprite);
+        public static Sprite CheeseBlockSprite => LoadSprite(CheeseBlockSpritePath, ref _cheeseBlockSprite) ?? CatBlockSprite;
         public static Sprite[] CatBlockSprites => GetCatBlockSprites();
         public static Sprite MouseSprite => LoadSprite(MouseSpritePath, ref _mouseSprite);
         public static Sprite[] MouseIdleSprites => LoadSpriteSequence(MouseIdleSpritePathPrefix, ref _mouseIdleSprites);

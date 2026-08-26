@@ -1,6 +1,7 @@
 using _Code.Block;
 using _Code.Field;
 using _Code.Stage;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace _Code.Manager
@@ -10,15 +11,36 @@ namespace _Code.Manager
         private const string ScoreSuffix = "\uC810";
         private const string StageLabel = "\uC2A4\uD14C\uC774\uC9C0";
         private const string GoalLabel = "\uBAA9\uD45C";
+        private const string CheeseLabel = "\uCE58\uC988";
+        private const string PlacementLabel = "\uBC30\uCE58";
 
         private StageDefinition _stageDefinition;
+        private readonly HashSet<Vector2Int> _remainingCheeseCells = new HashSet<Vector2Int>();
+        private int _usedPlacementCount;
 
         public bool IsStageMode { get; private set; }
-        public int TargetScore => IsStageMode ? _stageDefinition.TargetScore : 0;
+        public int StageNumber => IsStageMode ? _stageDefinition.Number : 0;
+        public StageGoalType GoalType => IsStageMode ? _stageDefinition.GoalType : StageGoalType.Score;
+        public bool HasScoreGoal => IsStageMode && _stageDefinition.GoalType == StageGoalType.Score;
+        public int TargetScore => HasScoreGoal ? _stageDefinition.TargetScore : 0;
+        public int RemainingCheeseCount => _remainingCheeseCells.Count;
+        public int TargetCheeseCount => IsStageMode ? _stageDefinition.TargetCheeseCount : 0;
+        public int UsedPlacementCount => _usedPlacementCount;
+        public int MaxPlacementCount => IsStageMode ? _stageDefinition.MaxPlacementCount : 0;
+        public int RemainingPlacementCount => MaxPlacementCount > 0 ? Mathf.Max(0, MaxPlacementCount - _usedPlacementCount) : 0;
+        public bool IsFailedByPlacementLimit =>
+            IsStageMode &&
+            _stageDefinition.GoalType == StageGoalType.Cheese &&
+            MaxPlacementCount > 0 &&
+            _usedPlacementCount >= MaxPlacementCount &&
+            _remainingCheeseCells.Count > 0;
+        public string StageSelectSceneName => "StageScene";
 
         public void Initialize(BlockField blockField, GameObject owner)
         {
             IsStageMode = StageRunContext.TryGetSelectedStage(out _stageDefinition);
+            _remainingCheeseCells.Clear();
+            _usedPlacementCount = 0;
 
             if (!IsStageMode || blockField == null)
                 return;
@@ -30,17 +52,69 @@ namespace _Code.Manager
                 if (blockField.TryGetField(point, out _Code.Field.Field field))
                     field.SetObject(owner, Color.white, BlockBlastSpriteLibrary.GetRandomCatBlockSprite(), groupId++);
             }
+
+            foreach (Vector2Int point in _stageDefinition.CheeseCells)
+            {
+                if (!blockField.TryGetField(point, out _Code.Field.Field field))
+                    continue;
+
+                field.SetStageCheeseObject(owner, BlockBlastSpriteLibrary.CheeseBlockSprite, groupId++);
+                _remainingCheeseCells.Add(point);
+            }
+        }
+
+        public void NotifyClearedPoints(IEnumerable<Vector2Int> clearedPoints)
+        {
+            if (!IsStageMode || _stageDefinition.GoalType != StageGoalType.Cheese || clearedPoints == null)
+                return;
+
+            foreach (Vector2Int point in clearedPoints)
+                _remainingCheeseCells.Remove(point);
+        }
+
+        public void NotifyPiecePlaced()
+        {
+            if (!IsStageMode || _stageDefinition.GoalType != StageGoalType.Cheese)
+                return;
+
+            _usedPlacementCount++;
+        }
+
+        public void MarkCleared()
+        {
+            if (IsStageMode)
+                StageProgress.MarkCleared(_stageDefinition.Number);
+        }
+
+        public string GetNextSceneNameAfterClear()
+        {
+            if (!IsStageMode)
+                return StageSelectSceneName;
+
+            int nextStageNumber = _stageDefinition.Number + 1;
+            return nextStageNumber <= StageCatalog.MaxStage
+                ? StageCatalog.GetStageSceneName(nextStageNumber)
+                : StageSelectSceneName;
         }
 
         public bool IsComplete(int score)
         {
-            return IsStageMode && score >= _stageDefinition.TargetScore;
+            if (!IsStageMode)
+                return false;
+
+            if (_stageDefinition.GoalType == StageGoalType.Cheese)
+                return _remainingCheeseCells.Count == 0;
+
+            return score >= _stageDefinition.TargetScore;
         }
 
         public string GetStartMessage()
         {
             if (!IsStageMode)
                 return string.Empty;
+
+            if (_stageDefinition.GoalType == StageGoalType.Cheese)
+                return $"{StageLabel} {_stageDefinition.Number} / {GoalLabel} {CheeseLabel} {TargetCheeseCount - RemainingCheeseCount}/{TargetCheeseCount} / {PlacementLabel} {RemainingPlacementCount}";
 
             return $"{StageLabel} {_stageDefinition.Number} / {GoalLabel} {_stageDefinition.TargetScore}{ScoreSuffix}";
         }

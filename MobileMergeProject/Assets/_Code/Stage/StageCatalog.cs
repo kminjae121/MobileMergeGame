@@ -4,18 +4,20 @@ namespace _Code.Stage
 {
     public static class StageCatalog
     {
+        private const string StageSceneNameFormat = "Stage{0}Scene";
+
         private static readonly StageDefinition[] _stages =
         {
-            new StageDefinition(1, 300, Cells(2, 2, 3, 2, 2, 3, 3, 3)),
-            new StageDefinition(2, 450, Cells(1, 1, 4, 1, 2, 2, 3, 2, 1, 4, 4, 4)),
-            new StageDefinition(3, 600, Cells(0, 0, 1, 0, 4, 0, 5, 0, 2, 2, 3, 2, 2, 3, 3, 3)),
-            new StageDefinition(4, 800, Cells(0, 0, 1, 0, 0, 1, 5, 0, 4, 0, 5, 1, 2, 4, 3, 4)),
-            new StageDefinition(5, 950, Cells(0, 1, 2, 1, 4, 1, 1, 2, 3, 2, 5, 2, 0, 4, 2, 4, 4, 4)),
-            new StageDefinition(6, 1100, Cells(0, 0, 0, 1, 0, 3, 0, 4, 5, 1, 5, 2, 5, 4, 1, 5, 2, 5, 3, 5)),
-            new StageDefinition(7, 1250, Cells(1, 0, 2, 0, 3, 0, 4, 0, 1, 5, 2, 5, 3, 5, 4, 5, 0, 2, 5, 3)),
-            new StageDefinition(8, 1450, Cells(0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 0, 4, 1, 1, 4, 0, 5)),
-            new StageDefinition(9, 1650, Cells(0, 0, 1, 0, 3, 0, 4, 0, 0, 2, 1, 2, 4, 2, 5, 2, 1, 4, 2, 4, 3, 4, 5, 4)),
-            new StageDefinition(10, 1900, Cells(0, 0, 1, 0, 4, 0, 5, 0, 0, 1, 5, 1, 2, 2, 3, 2, 2, 3, 3, 3, 0, 4, 5, 4, 1, 5, 4, 5))
+            ScoreStage(1, 1000),
+            CheeseStage(2, 13, Cells(2, 2, 3, 3)),
+            ScoreStage(3, 2000),
+            CheeseStage(4, 17, Cells(1, 1, 4, 1, 1, 4, 4, 4)),
+            ScoreStage(5, 5000),
+            CheeseStage(6, 21, Cells(1, 0, 4, 0, 2, 2, 3, 2, 1, 5, 4, 5)),
+            ScoreStage(7, 7000),
+            ScoreStage(8, 8000),
+            ScoreStage(9, 10000),
+            CheeseStage(10, 25, Cells(0, 0, 2, 0, 5, 0, 1, 2, 4, 2, 0, 5, 3, 5, 5, 5))
         };
 
         public static int MaxStage => _stages.Length;
@@ -30,6 +32,34 @@ namespace _Code.Stage
 
             stage = _stages[number - 1];
             return true;
+        }
+
+        public static string GetStageSceneName(int number)
+        {
+            return string.Format(StageSceneNameFormat, Mathf.Clamp(number, 1, MaxStage));
+        }
+
+        public static bool TryGetStageNumberFromSceneName(string sceneName, out int stageNumber)
+        {
+            stageNumber = 0;
+
+            if (string.IsNullOrEmpty(sceneName) ||
+                !sceneName.StartsWith("Stage") ||
+                !sceneName.EndsWith("Scene"))
+                return false;
+
+            string numberText = sceneName.Substring(5, sceneName.Length - 10);
+            return int.TryParse(numberText, out stageNumber) && stageNumber >= 1 && stageNumber <= MaxStage;
+        }
+
+        private static StageDefinition ScoreStage(int number, int targetScore)
+        {
+            return new StageDefinition(number, StageGoalType.Score, targetScore, Cells(), Cells(), 0);
+        }
+
+        private static StageDefinition CheeseStage(int number, int maxPlacementCount, Vector2Int[] cheeseCells)
+        {
+            return new StageDefinition(number, StageGoalType.Cheese, 0, Cells(), cheeseCells, maxPlacementCount);
         }
 
         private static Vector2Int[] Cells(params int[] coordinates)

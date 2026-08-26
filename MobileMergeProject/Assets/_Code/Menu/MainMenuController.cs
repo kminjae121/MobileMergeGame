@@ -121,13 +121,13 @@ namespace _Code.Menu
         private void UpdateMaxScoreText(int maxScore)
         {
             if (maxScoreTxt != null)
-                maxScoreTxt.text = $"\uCD5C\uB300\uC810\uC218 : {maxScore}";
+                maxScoreTxt.text = $"{maxScore}";
         }
 
         private void UpdateGoldText(int gold)
         {
             if (goldTxt != null)
-                goldTxt.text = $"\uACE8\uB4DC : {gold}";
+                goldTxt.text = $"{gold}";
         }
 
         public void StartGame()

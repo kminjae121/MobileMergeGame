@@ -47,8 +47,8 @@ namespace _Code.Manager
         public void Initialize(bool isStageMode, int stageTargetScore)
         {
             _score = 0;
-            _isStageMode = isStageMode;
             _stageTargetScore = Mathf.Max(0, stageTargetScore);
+            _isStageMode = isStageMode && _stageTargetScore > 0;
 
             LoadPlayerData();
             UpdateScoreText();
