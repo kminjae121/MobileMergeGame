@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94950d2fb6d940069de8fa49dc613e55, type: 3}
   m_Name: BGM
   m_EditorClassIdentifier: Assembly-CSharp::_Code.SO.SoundClipSO
-  Clip: {fileID: 0}
+  Clip: {fileID: 8300000, guid: 73ebeb8b84c32d349943075587c35cd1, type: 3}
   AudioName: BGM
   IsLooping: 1
-  Volume: 0
+  Volume: 0.3

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94950d2fb6d940069de8fa49dc613e55, type: 3}
   m_Name: CatSound
   m_EditorClassIdentifier: Assembly-CSharp::_Code.SO.SoundClipSO
-  Clip: {fileID: 0}
+  Clip: {fileID: 8300000, guid: 746401defbccd5d4d9cd12e83ff39247, type: 3}
   AudioName: CatSound
   IsLooping: 0
-  Volume: 0
+  Volume: 0.126

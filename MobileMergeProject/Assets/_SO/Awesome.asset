@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Awesome
   m_EditorClassIdentifier: Assembly-CSharp::_Code.SO.TextSO
   EventType: 3
-  Text: Awesome!!!
+  Text: Meow
   TxtColor: {r: 1, g: 0, b: 0, a: 1}

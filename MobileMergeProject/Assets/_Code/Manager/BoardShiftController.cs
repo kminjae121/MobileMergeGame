@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using _Code.Block;
 using _Code.Field;
 using _Code.SO;
+using Code.Core;
 using Code.Core.Events.Bus;
 using Code.Core.Events.Bus.TextEvent;
 using UnityEngine;
@@ -78,18 +79,22 @@ namespace _Code.Manager
                 case 1:
                     Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.1f));
                     Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Clear));
+                    SoundManager.Instance.PlayClip("ClearSound");
                     break;
                 case 2:
                     Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.2f));
                     Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Double));
+                    SoundManager.Instance.PlayClip("ClearSound");
                     break;
                 case 3:
                     Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.3f));
                     Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Tripple));
+                    SoundManager.Instance.PlayClip("ClearSound");
                     break;
                 case 4:
                     Bus<CamShakeEvent>.Raise(new CamShakeEvent(0.4f));
                     Bus<EventTxtEvent>.Raise(new EventTxtEvent(TextType.Quadra));
+                    SoundManager.Instance.PlayClip("ClearSound");
                     break;
             }
             return true;

@@ -42,6 +42,8 @@ namespace _Code.Field
                 Installables[point.x, point.y] = field;
                 _fields.Add(field);
             }
+
+            BlockCellVisualPool.Prewarm(_width * _height, GetObjectRendererTemplate());
         }
 
         public bool TryGetField(Vector2Int point, out Field field)
@@ -261,6 +263,17 @@ namespace _Code.Field
         private bool IsInside(Vector2Int point)
         {
             return point.x >= 0 && point.x < _width && point.y >= 0 && point.y < _height;
+        }
+
+        private SpriteRenderer GetObjectRendererTemplate()
+        {
+            foreach (Field field in _fields)
+            {
+                if (field != null && field.ObjectRendererTemplate != null)
+                    return field.ObjectRendererTemplate;
+            }
+
+            return null;
         }
 
         private bool IsRowFull(int y)

@@ -18,7 +18,10 @@ namespace _Code.Field
         private Sprite _currentSprite;
         private int _currentGroupId = -1;
         private bool _isStageCheese;
+        private SpriteRenderer _objectRendererTemplate;
         private Vector3 _objectRendererHomeLocalPosition;
+        private Quaternion _objectRendererHomeLocalRotation = Quaternion.identity;
+        private Vector3 _objectRendererHomeLocalScale = Vector3.one;
         private bool _hasObjectRendererHomeLocalPosition;
         private Tween _objectMoveTween;
 
@@ -29,15 +32,15 @@ namespace _Code.Field
         public Sprite CurrentSprite => _currentSprite;
         public int CurrentGroupId => _currentGroupId;
         public bool IsStageCheese => _isStageCheese;
-        public Vector3 ObjectRendererWorldPosition => _objectRenderer != null ? _objectRenderer.transform.position : transform.position;
+        public SpriteRenderer ObjectRendererTemplate => _objectRendererTemplate != null ? _objectRendererTemplate : _objectRenderer;
+        public Vector3 ObjectRendererWorldPosition => _objectRenderer != null ? _objectRenderer.transform.position : GetObjectRendererHomeWorldPosition();
 
         private void Awake()
         {
             if (_backgroundRenderer == null)
                 _backgroundRenderer = GetComponent<SpriteRenderer>();
 
-            CaptureObjectRendererHomePosition();
-            ApplyObjectSprite();
+            SetObjectRendererTemplate(_objectRenderer);
         }
         
         public void SetObject(GameObject obj)
@@ -80,7 +83,12 @@ namespace _Code.Field
             _isStageCheese = isStageCheese;
 
             if (_objectRenderer == null)
-                return;
+                _objectRenderer = BlockCellVisualPool.Get(
+                    _objectRendererTemplate,
+                    transform,
+                    _objectRendererHomeLocalPosition,
+                    _objectRendererHomeLocalRotation,
+                    _objectRendererHomeLocalScale);
 
             bool hasCatSprite = ApplyObjectSprite();
             _objectRenderer.color = hasCatSprite ? Color.white : color;
@@ -98,21 +106,16 @@ namespace _Code.Field
             _currentGroupId = -1;
             _isStageCheese = false;
 
-            if (_objectRenderer != null)
-            {
-                StopObjectMove();
-                SnapObjectRendererToHome();
-                _objectRenderer.enabled = false;
-            }
+            ReleaseObjectRenderer();
         }
 
         public void Configure(Vector2Int point, SpriteRenderer backgroundRenderer, SpriteRenderer objectRenderer)
         {
+            ReleaseObjectRenderer();
+
             Point = point;
             _backgroundRenderer = backgroundRenderer;
-            _objectRenderer = objectRenderer;
-            _hasObjectRendererHomeLocalPosition = false;
-            CaptureObjectRendererHomePosition();
+            SetObjectRendererTemplate(objectRenderer);
 
             ClearObject();
         }
@@ -171,23 +174,35 @@ namespace _Code.Field
 
         private void CaptureObjectRendererHomePosition()
         {
-            if (_objectRenderer == null || _hasObjectRendererHomeLocalPosition)
+            if (_hasObjectRendererHomeLocalPosition)
                 return;
 
-            _objectRendererHomeLocalPosition = _objectRenderer.transform.localPosition;
+            SpriteRenderer sourceRenderer = ObjectRendererTemplate;
+
+            if (sourceRenderer == null)
+            {
+                _objectRendererHomeLocalPosition = Vector3.zero;
+                _objectRendererHomeLocalRotation = Quaternion.identity;
+                _objectRendererHomeLocalScale = Vector3.one;
+                _hasObjectRendererHomeLocalPosition = true;
+                return;
+            }
+
+            Transform sourceTransform = sourceRenderer.transform;
+            _objectRendererHomeLocalPosition = sourceTransform.localPosition;
+            _objectRendererHomeLocalRotation = sourceTransform.localRotation;
+            _objectRendererHomeLocalScale = sourceTransform.localScale;
             _hasObjectRendererHomeLocalPosition = true;
         }
 
         private Vector3 GetObjectRendererHomeWorldPosition()
         {
-            if (_objectRenderer == null)
-                return transform.position;
-
             CaptureObjectRendererHomePosition();
-            Transform objectTransform = _objectRenderer.transform;
-            return objectTransform.parent != null
-                ? objectTransform.parent.TransformPoint(_objectRendererHomeLocalPosition)
-                : _objectRendererHomeLocalPosition;
+            Transform parentTransform = _objectRenderer != null && _objectRenderer.transform.parent != null
+                ? _objectRenderer.transform.parent
+                : transform;
+
+            return parentTransform.TransformPoint(_objectRendererHomeLocalPosition);
         }
 
         private void SnapObjectRendererToHome()
@@ -197,6 +212,30 @@ namespace _Code.Field
 
             CaptureObjectRendererHomePosition();
             _objectRenderer.transform.localPosition = _objectRendererHomeLocalPosition;
+            _objectRenderer.transform.localRotation = _objectRendererHomeLocalRotation;
+            _objectRenderer.transform.localScale = _objectRendererHomeLocalScale;
+        }
+
+        private void SetObjectRendererTemplate(SpriteRenderer template)
+        {
+            _objectRendererTemplate = template;
+            _objectRenderer = null;
+            _hasObjectRendererHomeLocalPosition = false;
+            CaptureObjectRendererHomePosition();
+
+            if (_objectRendererTemplate != null)
+                _objectRendererTemplate.enabled = false;
+        }
+
+        private void ReleaseObjectRenderer()
+        {
+            if (_objectRenderer == null)
+                return;
+
+            StopObjectMove();
+            SnapObjectRendererToHome();
+            BlockCellVisualPool.Release(_objectRenderer);
+            _objectRenderer = null;
         }
     }
 }

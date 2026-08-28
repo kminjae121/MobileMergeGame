@@ -12,11 +12,11 @@ namespace Code.Core
         [SerializeField] private AudioSource audioSourcePrefab;
         [SerializeField] private int sourceCnt = 10;
 
-        private readonly Stack<AudioSource> audioSources = new Stack<AudioSource>();
-        private readonly List<AudioSource> _usingSources = new List<AudioSource>();
+        private readonly List<AudioSource> _usingSources = new();
+        private readonly Stack<AudioSource> audioSources = new();
 
-        private readonly Dictionary<string, SoundClipSO> _clipDictionary = new Dictionary<string, SoundClipSO>();
-        private readonly Dictionary<string, SoundClipSO> _loopingClipDictionary = new Dictionary<string, SoundClipSO>();
+        private readonly Dictionary<string, SoundClipSO> _clipDictionary = new();
+        private readonly Dictionary<string, SoundClipSO> _loopingClipDictionary = new();
 
         protected override void Awake()
         {
@@ -52,6 +52,8 @@ namespace Code.Core
                 src.gameObject.SetActive(false);
                 audioSources.Push(src);
             }
+            
+            PlayBGMSound("BGM");
         }
 
         public void PlayClip(string name)

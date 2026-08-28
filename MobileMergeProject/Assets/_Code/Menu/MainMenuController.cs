@@ -12,6 +12,7 @@ namespace _Code.Menu
     public sealed class MainMenuController : MonoBehaviour
     {
         [SerializeField] private string gameSceneName = "GameScene";
+        [SerializeField] private string mainSceneName = "MainScene";
         [SerializeField] private string stageSceneName = "StageScene";
         [SerializeField] private Button startBtn;
         [SerializeField] private Button stageBtn;
@@ -154,6 +155,14 @@ namespace _Code.Menu
 
             if (!string.IsNullOrEmpty(stageSceneName))
                 SceneManager.LoadScene(stageSceneName);
+        }
+
+        public void OpenMainScene()
+        {
+            StageRunContext.SelectInfiniteMode();
+
+            if (!string.IsNullOrEmpty(mainSceneName))
+                SceneManager.LoadScene(mainSceneName);
         }
 
         public void StartGoogleLogin()

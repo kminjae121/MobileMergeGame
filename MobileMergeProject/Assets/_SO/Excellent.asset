@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Excellent
   m_EditorClassIdentifier: Assembly-CSharp::_Code.SO.TextSO
   EventType: 1
-  Text: Excellent!
+  Text: Cat!
   TxtColor: {r: 0.26198173, g: 1, b: 0, a: 1}

@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Amazing
   m_EditorClassIdentifier: Assembly-CSharp::_Code.SO.TextSO
   EventType: 2
-  Text: AMAZING!!
+  Text: Catch the Cats!! Meow
   TxtColor: {r: 0, g: 0.47705173, b: 1, a: 1}

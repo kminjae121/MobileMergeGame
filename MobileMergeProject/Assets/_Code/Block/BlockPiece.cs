@@ -13,6 +13,7 @@ namespace _Code.Block
         [SerializeField, Min(0.1f)] private float _slotCellSize = 0.72f;
         [SerializeField, Min(0.1f)] private float _slotCellScaleMultiplier = 0.9f;
         [SerializeField, Min(0.1f)] private float _dragCellScaleMultiplier = 1.14f;
+        [SerializeField, Min(1f)] private float _pickupColliderSizeMultiplier = 2.5f;
         [SerializeField] private float _dragLift = 0.45f;
         [SerializeField] private int _defaultSortingOrder = 3;
         [SerializeField] private int _dragSortingOrder = 20;
@@ -307,8 +308,10 @@ namespace _Code.Block
                 maxY = Mathf.Max(maxY, localPosition.y);
             }
 
+            Vector2 baseSize = new Vector2(maxX - minX + displayCellSize, maxY - minY + displayCellSize);
+
             _touchCollider.offset = new Vector2((minX + maxX) * 0.5f, (minY + maxY) * 0.5f);
-            _touchCollider.size = new Vector2(maxX - minX + displayCellSize, maxY - minY + displayCellSize);
+            _touchCollider.size = baseSize * Mathf.Max(1f, _pickupColliderSizeMultiplier);
             _touchCollider.isTrigger = true;
         }
 
