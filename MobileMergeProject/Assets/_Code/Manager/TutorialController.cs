@@ -10,7 +10,7 @@ namespace _Code.Manager
 {
     public sealed class TutorialController : MonoBehaviour
     {
-        private const string TutorialCompletedKey = "CatchTheCats.MouseMoveTutorial.Completed.v3";
+        private const string TutorialCompletedKey = "CatchTheCats.MouseMoveTutorial.Completed.v4";
 
         private enum StepKind
         {
@@ -154,6 +154,14 @@ namespace _Code.Manager
                 return;
 
             AdvanceStep();
+        }
+
+        public bool CanShiftBoard()
+        {
+            if (!_isRunning || _steps.Count == 0)
+                return true;
+
+            return CurrentStep.Kind == StepKind.WaitForShift;
         }
 
         private TutorialStep CurrentStep => _steps[Mathf.Clamp(_stepIndex, 0, _steps.Count - 1)];
@@ -306,9 +314,15 @@ namespace _Code.Manager
             _bodyText = CreateText(panelRect, "TutorialBodyTxt", new Vector2(0.05f, 0.2f), new Vector2(0.78f, 0.58f), 34f, bodyColor, TextAlignmentOptions.Left);
             _progressText = CreateText(panelRect, "TutorialProgressTxt", new Vector2(0.05f, 0.03f), new Vector2(0.28f, 0.18f), 24f, bodyColor, TextAlignmentOptions.Left);
 
-            _nextButton = CreateButton(panelRect, "TutorialNextButton", new Vector2(0.72f, 0.14f), new Vector2(0.94f, 0.48f), "다음");
+            _nextButton = CreateButton(panelRect, "TutorialNextButton", new Vector2(0.775f, 0.225f), new Vector2(0.885f, 0.395f), "다음");
             _nextButton.onClick.AddListener(AdvanceStep);
             _nextButtonText = _nextButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (_nextButtonText != null)
+            {
+                _nextButtonText.fontSize = 28f;
+                _nextButtonText.fontSizeMax = 28f;
+                _nextButtonText.fontSizeMin = 16f;
+            }
 
             _closeButton = CreateButton(panelRect, "TutorialCloseButton", new Vector2(0.88f, 0.58f), new Vector2(0.96f, 0.88f), "X");
             _closeButton.onClick.AddListener(Close);
@@ -674,8 +688,15 @@ namespace _Code.Manager
                 return;
 
             _steps.Add(new TutorialStep(
+                "고양이 배치",
+                "먼저 아래 고양이 블럭을 잡고 노란 칸에 맞춰 놓아보세요.",
+                "고양이 놓기",
+                StepKind.WaitForPiecePlaced,
+                Vector2Int.zero));
+
+            _steps.Add(new TutorialStep(
                 "쥐 이동하기",
-                "화면을 밀면 쥐가 쥐구멍 사이를 이동하고, 고양이 블럭들도 같은 방향으로 밀려요.",
+                "이제 화면을 밀면 쥐가 쥐구멍 사이를 이동하고, 고양이 블럭들도 같은 방향으로 밀려요.",
                 "쥐를 움직여볼까요?",
                 StepKind.Message,
                 Vector2Int.zero));
@@ -707,13 +728,6 @@ namespace _Code.Manager
                 "위로 밀기",
                 StepKind.WaitForShift,
                 Vector2Int.up));
-
-            _steps.Add(new TutorialStep(
-                "고양이 배치",
-                "아래 고양이 블럭을 잡고 노란 칸에 맞춰 놓아보세요.",
-                "고양이 놓기",
-                StepKind.WaitForPiecePlaced,
-                Vector2Int.zero));
 
             _steps.Add(new TutorialStep(
                 "준비 완료",

@@ -100,6 +100,9 @@ namespace _Code.Manager
             if (_isGameOver)
                 return;
 
+            if (tutorialController != null && !tutorialController.CanShiftBoard())
+                return;
+
             if (boardShiftController != null &&
                 boardShiftController.TryReadDirection(BlockPiece.IsAnyDragging, out Vector2Int direction))
                 ShiftBoard(direction);
