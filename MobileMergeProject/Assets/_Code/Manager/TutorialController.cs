@@ -164,6 +164,43 @@ namespace _Code.Manager
             return CurrentStep.Kind == StepKind.WaitForShift;
         }
 
+        public bool CanShiftBoard(Vector2Int direction)
+        {
+            if (!_isRunning || _steps.Count == 0)
+                return true;
+
+            return CurrentStep.Kind == StepKind.WaitForShift &&
+                   NormalizeDirection(direction) == CurrentStep.Direction;
+        }
+
+        public bool CanInteractWithPiece(BlockPiece piece)
+        {
+            if (!_isRunning || _steps.Count == 0)
+                return true;
+
+            return CurrentStep.Kind == StepKind.WaitForPiecePlaced &&
+                   piece != null &&
+                   !piece.IsPlaced;
+        }
+
+        public void NotifyBoardShiftBlocked(Vector2Int direction)
+        {
+            if (!_isRunning || _steps.Count == 0)
+                return;
+
+            SetTemporaryHint(GetCurrentActionHint());
+            RefreshGuide();
+        }
+
+        public void NotifyPieceInteractionBlocked()
+        {
+            if (!_isRunning || _steps.Count == 0)
+                return;
+
+            SetTemporaryHint(GetCurrentActionHint());
+            RefreshGuide();
+        }
+
         private TutorialStep CurrentStep => _steps[Mathf.Clamp(_stepIndex, 0, _steps.Count - 1)];
 
         private void Begin(bool isManualRun)
@@ -259,6 +296,22 @@ namespace _Code.Manager
                 messageText.text = hint;
         }
 
+        private string GetCurrentActionHint()
+        {
+            TutorialStep step = CurrentStep;
+
+            if (step.Kind == StepKind.WaitForPiecePlaced)
+                return "먼저 고양이 블럭을 놓아볼게요.";
+
+            if (step.Kind == StepKind.WaitForShift)
+                return $"{DirectionToKorean(step.Direction)} 방향으로만 밀어볼게요.";
+
+            if (step.Kind == StepKind.Finish)
+                return "끝내기 버튼을 눌러 튜토리얼을 마무리해요.";
+
+            return "다음 버튼을 눌러볼게요.";
+        }
+
         private void HideView()
         {
             if (_root != null)
@@ -314,7 +367,7 @@ namespace _Code.Manager
             _bodyText = CreateText(panelRect, "TutorialBodyTxt", new Vector2(0.05f, 0.2f), new Vector2(0.78f, 0.58f), 34f, bodyColor, TextAlignmentOptions.Left);
             _progressText = CreateText(panelRect, "TutorialProgressTxt", new Vector2(0.05f, 0.03f), new Vector2(0.28f, 0.18f), 24f, bodyColor, TextAlignmentOptions.Left);
 
-            _nextButton = CreateButton(panelRect, "TutorialNextButton", new Vector2(0.775f, 0.225f), new Vector2(0.885f, 0.395f), "다음");
+            _nextButton = CreateButton(panelRect, "TutorialNextButton", new Vector2(0.85f, 0.35f), new Vector2(0.96f, 0.52f), "다음");
             _nextButton.onClick.AddListener(AdvanceStep);
             _nextButtonText = _nextButton.GetComponentInChildren<TextMeshProUGUI>();
             if (_nextButtonText != null)

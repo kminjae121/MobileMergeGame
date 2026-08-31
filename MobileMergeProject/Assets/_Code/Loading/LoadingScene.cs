@@ -5,6 +5,7 @@ using Code.Core;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -13,10 +14,11 @@ public class LoadingScene : MonoBehaviour
     [SerializeField] private Image barImg;
     [SerializeField] private float loadingSec;
     [SerializeField] private TextMeshProUGUI loadingTxt;
-    [SerializeField] private List<string> loadingStrs; 
-        
-    private bool isLoading = true;
+    [SerializeField] private List<string> loadingStrs;
 
+    public UnityEvent EndEvent;
+    
+    private bool isLoading = true;
     
     private void Awake()
     {
@@ -32,6 +34,7 @@ public class LoadingScene : MonoBehaviour
             {
                 isLoading = false;
                 gameObject.SetActive(false);
+                EndEvent?.Invoke();
             });
     }
 

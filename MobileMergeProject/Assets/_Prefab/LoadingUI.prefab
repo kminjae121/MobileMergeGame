@@ -269,13 +269,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LoadingScene
   barImg: {fileID: 688210043359009009}
-  loadingSec: 6
+  loadingSec: 2
   loadingTxt: {fileID: 494275600347084488}
   loadingStrs:
   - "\uB85C\uB529\uC911."
   - "\uB85C\uB529\uC911.."
   - "\uB85C\uB529\uC911..."
   - "\uB85C\uB529\uC911...."
+  EndEvent:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &8930053941147626572
 GameObject:
   m_ObjectHideFlags: 0

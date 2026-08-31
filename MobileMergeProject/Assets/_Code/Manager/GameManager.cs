@@ -100,12 +100,17 @@ namespace _Code.Manager
             if (_isGameOver)
                 return;
 
-            if (tutorialController != null && !tutorialController.CanShiftBoard())
-                return;
-
             if (boardShiftController != null &&
                 boardShiftController.TryReadDirection(BlockPiece.IsAnyDragging, out Vector2Int direction))
+            {
+                if (tutorialController != null && !tutorialController.CanShiftBoard(direction))
+                {
+                    tutorialController.NotifyBoardShiftBlocked(direction);
+                    return;
+                }
+
                 ShiftBoard(direction);
+            }
         }
 
         private void LateUpdate()
@@ -205,6 +210,13 @@ namespace _Code.Manager
 
             if (_isGameOver)
             {
+                piece.ReturnToSlot();
+                return;
+            }
+
+            if (tutorialController != null && !tutorialController.CanInteractWithPiece(piece))
+            {
+                tutorialController.NotifyPieceInteractionBlocked();
                 piece.ReturnToSlot();
                 return;
             }
@@ -340,7 +352,10 @@ namespace _Code.Manager
             foreach (BlockPiece piece in pieces)
             {
                 if (piece != null)
+                {
+                    piece.SetCanBeginDrag(CanBeginPieceDrag);
                     piece.Released += HandlePieceReleased;
+                }
             }
         }
 
@@ -352,8 +367,23 @@ namespace _Code.Manager
             foreach (BlockPiece piece in pieces)
             {
                 if (piece != null)
+                {
                     piece.Released -= HandlePieceReleased;
+                    piece.SetCanBeginDrag(null);
+                }
             }
+        }
+
+        private bool CanBeginPieceDrag(BlockPiece piece)
+        {
+            if (_isGameOver)
+                return false;
+
+            if (tutorialController == null || tutorialController.CanInteractWithPiece(piece))
+                return true;
+
+            tutorialController.NotifyPieceInteractionBlocked();
+            return false;
         }
 
         private bool TryCompleteStage()

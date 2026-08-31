@@ -29,6 +29,7 @@ namespace _Code.Block
         private Vector3 _slotPosition;
         private Vector3 _dragOffset;
         private Vector3 _releaseAnchorWorldPosition;
+        private Func<BlockPiece, bool> _canBeginDrag;
         private int _activePointerId = MousePointerId;
         private bool _isDragging;
         private bool _isPlaced = true;
@@ -87,6 +88,11 @@ namespace _Code.Block
         public void CaptureSlotPosition()
         {
             _slotPosition = transform.position;
+        }
+
+        public void SetCanBeginDrag(Func<BlockPiece, bool> canBeginDrag)
+        {
+            _canBeginDrag = canBeginDrag;
         }
 
         public void Configure(BlockShape shape, Color color)
@@ -202,6 +208,9 @@ namespace _Code.Block
 
         private void BeginDrag(int pointerId, Vector3 screenPosition)
         {
+            if (_canBeginDrag != null && !_canBeginDrag(this))
+                return;
+
             if (_mainCamera == null)
                 _mainCamera = Camera.main;
 
