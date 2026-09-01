@@ -21,7 +21,7 @@ namespace _Code.Manager
         private const string BestScoreLabel = "\uCD5C\uACE0\uC810\uC218";
         private const string RetryButtonLabel = "\uB2E4\uC2DC\uD558\uAE30";
         private const string NextButtonLabel = "\uB2E4\uC74C";
-        private const string StageSelectButtonLabel = "\uC2A4\uD14C\uC774\uC9C0";
+        private const string StageExitButtonLabel = "\uB098\uAC00\uAE30";
 
         private TextMeshProUGUI _primaryButtonLabelText;
         private PrimaryButtonAction _primaryButtonAction = PrimaryButtonAction.RestartCurrentScene;
@@ -77,7 +77,7 @@ namespace _Code.Manager
                 score.ToString(),
                 BestScoreLabel,
                 bestScore.ToString(),
-                StageSelectButtonLabel,
+                StageExitButtonLabel,
                 stageSelectSceneName);
         }
 
