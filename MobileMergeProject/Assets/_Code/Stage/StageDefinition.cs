@@ -6,7 +6,17 @@ namespace _Code.Stage
     public enum StageGoalType
     {
         Score,
-        Cheese
+        Cheese,
+        CatRemoval
+    }
+
+    public enum StageTargetCatType
+    {
+        None,
+        Black,
+        White,
+        Sphynx,
+        Orange
     }
 
     public readonly struct StageDefinition
@@ -17,7 +27,9 @@ namespace _Code.Stage
             int targetScore,
             Vector2Int[] startingCells,
             Vector2Int[] cheeseCells,
-            int maxPlacementCount)
+            int maxPlacementCount,
+            StageTargetCatType targetCatType = StageTargetCatType.None,
+            int targetCatRemovalCount = 0)
         {
             Number = number;
             GoalType = goalType;
@@ -25,6 +37,8 @@ namespace _Code.Stage
             StartingCells = startingCells ?? new Vector2Int[0];
             CheeseCells = cheeseCells ?? new Vector2Int[0];
             MaxPlacementCount = Mathf.Max(0, maxPlacementCount);
+            TargetCatType = targetCatType;
+            TargetCatRemovalCount = Mathf.Max(0, targetCatRemovalCount);
         }
 
         public int Number { get; }
@@ -33,6 +47,8 @@ namespace _Code.Stage
         public IReadOnlyList<Vector2Int> StartingCells { get; }
         public IReadOnlyList<Vector2Int> CheeseCells { get; }
         public int MaxPlacementCount { get; }
+        public StageTargetCatType TargetCatType { get; }
+        public int TargetCatRemovalCount { get; }
         public int TargetCheeseCount => CheeseCells.Count;
     }
 }

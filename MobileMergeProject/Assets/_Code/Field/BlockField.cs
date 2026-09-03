@@ -183,20 +183,29 @@ namespace _Code.Field
 
         public int ClearCompletedLines()
         {
-            return ClearCompletedLines(null);
+            return ClearCompletedLines(null, null, null);
         }
 
         public int ClearCompletedLines(ICollection<Vector3> clearedWorldPositions)
         {
-            return ClearCompletedLines(clearedWorldPositions, null);
+            return ClearCompletedLines(clearedWorldPositions, null, null);
         }
 
         public int ClearCompletedLines(ICollection<Vector3> clearedWorldPositions, ICollection<Vector2Int> clearedPoints)
+        {
+            return ClearCompletedLines(clearedWorldPositions, clearedPoints, null);
+        }
+
+        public int ClearCompletedLines(
+            ICollection<Vector3> clearedWorldPositions,
+            ICollection<Vector2Int> clearedPoints,
+            ICollection<Sprite> clearedSprites)
         {
             HashSet<Field> fieldsToClear = new HashSet<Field>();
             int clearedLineCount = 0;
             clearedWorldPositions?.Clear();
             clearedPoints?.Clear();
+            clearedSprites?.Clear();
 
             for (int y = 0; y < _height; y++)
             {
@@ -222,6 +231,7 @@ namespace _Code.Field
             {
                 clearedWorldPositions?.Add(field.transform.position);
                 clearedPoints?.Add(field.Point);
+                clearedSprites?.Add(field.CurrentSprite);
                 field.ClearObject();
             }
 

@@ -48,6 +48,7 @@ namespace _Code.Manager
 
         private readonly List<Vector3> _clearedBlockPositions = new List<Vector3>(36);
         private readonly List<Vector2Int> _clearedBlockPoints = new List<Vector2Int>(36);
+        private readonly List<Sprite> _clearedBlockSprites = new List<Sprite>(36);
         private bool _isGameOver;
 
         private static readonly Color BlackCatEffectColor = new Color(0.08f, 0.08f, 0.08f, 1f);
@@ -238,8 +239,9 @@ namespace _Code.Manager
             
             playerProgressController.AddScore(piece.CellCount * 10, false);
 
-            int clearedLines = blockField.ClearCompletedLines(_clearedBlockPositions, _clearedBlockPoints);
+            int clearedLines = blockField.ClearCompletedLines(_clearedBlockPositions, _clearedBlockPoints, _clearedBlockSprites);
             stageModeController.NotifyClearedPoints(_clearedBlockPoints);
+            stageModeController.NotifyClearedCatSprites(_clearedBlockSprites);
             if (clearedLines > 0)
             {
                 switch (clearedLines)
@@ -312,7 +314,7 @@ namespace _Code.Manager
         private bool ShiftBoard(Vector2Int direction)
         {
             if (boardShiftController == null ||
-                !boardShiftController.TryShift(direction, _clearedBlockPositions, _clearedBlockPoints, out BoardShiftController.BoardShiftResult result))
+                !boardShiftController.TryShift(direction, _clearedBlockPositions, _clearedBlockPoints, _clearedBlockSprites, out BoardShiftController.BoardShiftResult result))
             {
                 tutorialController?.NotifyBoardShiftFailed(direction);
                 return false;
@@ -320,6 +322,7 @@ namespace _Code.Manager
 
             tutorialController?.NotifyBoardShiftSucceeded(direction);
             stageModeController.NotifyClearedPoints(_clearedBlockPoints);
+            stageModeController.NotifyClearedCatSprites(_clearedBlockSprites);
 
             if (result.ClearedLines > 0)
             {

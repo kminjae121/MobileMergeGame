@@ -13,10 +13,17 @@ namespace _Code.Manager
         private const string GoalLabel = "\uBAA9\uD45C";
         private const string CheeseLabel = "\uCE58\uC988";
         private const string PlacementLabel = "\uBC30\uCE58";
+        private const string RemoveLabel = "\uC81C\uAC70";
+        private const string BlackCatLabel = "\uAC80\uC740 \uACE0\uC591\uC774";
+        private const string WhiteCatLabel = "\uD770 \uACE0\uC591\uC774";
+        private const string SphynxCatLabel = "\uC2A4\uD551\uD06C\uC2A4 \uACE0\uC591\uC774";
+        private const string OrangeCatLabel = "\uC8FC\uD669 \uACE0\uC591\uC774";
+        private const string CatLabel = "\uACE0\uC591\uC774";
 
         private StageDefinition _stageDefinition;
         private readonly HashSet<Vector2Int> _remainingCheeseCells = new HashSet<Vector2Int>();
         private int _usedPlacementCount;
+        private int _removedTargetCatCount;
 
         public bool IsStageMode { get; private set; }
         public int StageNumber => IsStageMode ? _stageDefinition.Number : 0;
@@ -25,6 +32,8 @@ namespace _Code.Manager
         public int TargetScore => HasScoreGoal ? _stageDefinition.TargetScore : 0;
         public int RemainingCheeseCount => _remainingCheeseCells.Count;
         public int TargetCheeseCount => IsStageMode ? _stageDefinition.TargetCheeseCount : 0;
+        public int TargetCatRemovalCount => IsStageMode ? _stageDefinition.TargetCatRemovalCount : 0;
+        public int RemovedTargetCatCount => _removedTargetCatCount;
         public int UsedPlacementCount => _usedPlacementCount;
         public int MaxPlacementCount => IsStageMode ? _stageDefinition.MaxPlacementCount : 0;
         public int RemainingPlacementCount => MaxPlacementCount > 0 ? Mathf.Max(0, MaxPlacementCount - _usedPlacementCount) : 0;
@@ -41,6 +50,7 @@ namespace _Code.Manager
             IsStageMode = StageRunContext.TryGetSelectedStage(out _stageDefinition);
             _remainingCheeseCells.Clear();
             _usedPlacementCount = 0;
+            _removedTargetCatCount = 0;
 
             if (!IsStageMode || blockField == null)
                 return;
@@ -70,6 +80,18 @@ namespace _Code.Manager
 
             foreach (Vector2Int point in clearedPoints)
                 _remainingCheeseCells.Remove(point);
+        }
+
+        public void NotifyClearedCatSprites(IEnumerable<Sprite> clearedSprites)
+        {
+            if (!IsStageMode || _stageDefinition.GoalType != StageGoalType.CatRemoval || clearedSprites == null)
+                return;
+
+            foreach (Sprite sprite in clearedSprites)
+            {
+                if (IsTargetCatSprite(sprite))
+                    _removedTargetCatCount++;
+            }
         }
 
         public void NotifyPiecePlaced()
@@ -105,6 +127,9 @@ namespace _Code.Manager
             if (_stageDefinition.GoalType == StageGoalType.Cheese)
                 return _remainingCheeseCells.Count == 0;
 
+            if (_stageDefinition.GoalType == StageGoalType.CatRemoval)
+                return TargetCatRemovalCount > 0 && _removedTargetCatCount >= TargetCatRemovalCount;
+
             return score >= _stageDefinition.TargetScore;
         }
 
@@ -116,6 +141,9 @@ namespace _Code.Manager
             if (_stageDefinition.GoalType == StageGoalType.Cheese)
                 return $"{StageLabel} {_stageDefinition.Number} / {GoalLabel} {CheeseLabel} {TargetCheeseCount - RemainingCheeseCount}/{TargetCheeseCount} / {PlacementLabel} {RemainingPlacementCount}";
 
+            if (_stageDefinition.GoalType == StageGoalType.CatRemoval)
+                return $"{StageLabel} {_stageDefinition.Number} / {GoalLabel} {GetTargetCatLabel()} {RemoveLabel} {_removedTargetCatCount}/{TargetCatRemovalCount}";
+
             return $"{StageLabel} {_stageDefinition.Number} / {GoalLabel} {_stageDefinition.TargetScore}{ScoreSuffix}";
         }
 
@@ -125,6 +153,60 @@ namespace _Code.Manager
                 return string.Empty;
 
             return $"{StageLabel} {_stageDefinition.Number} \uD074\uB9AC\uC5B4!";
+        }
+
+        private bool IsTargetCatSprite(Sprite sprite)
+        {
+            if (sprite == null)
+                return false;
+
+            switch (_stageDefinition.TargetCatType)
+            {
+                case StageTargetCatType.Black:
+                    return IsCatSprite(sprite, 0, "Black");
+                case StageTargetCatType.White:
+                    return IsCatSprite(sprite, 1, "White");
+                case StageTargetCatType.Sphynx:
+                    return IsCatSprite(sprite, 2, "Sphynx");
+                case StageTargetCatType.Orange:
+                    return IsCatSprite(sprite, 3, "CatBlock") || ContainsSpriteName(sprite, "Orange");
+                default:
+                    return false;
+            }
+        }
+
+        private string GetTargetCatLabel()
+        {
+            switch (_stageDefinition.TargetCatType)
+            {
+                case StageTargetCatType.Black:
+                    return BlackCatLabel;
+                case StageTargetCatType.White:
+                    return WhiteCatLabel;
+                case StageTargetCatType.Sphynx:
+                    return SphynxCatLabel;
+                case StageTargetCatType.Orange:
+                    return OrangeCatLabel;
+                default:
+                    return CatLabel;
+            }
+        }
+
+        private static bool IsCatSprite(Sprite sprite, int spriteIndex, string nameToken)
+        {
+            IReadOnlyList<Sprite> catSprites = BlockBlastSpriteLibrary.CatBlockSprites;
+
+            if (spriteIndex >= 0 && spriteIndex < catSprites.Count && sprite == catSprites[spriteIndex])
+                return true;
+
+            return ContainsSpriteName(sprite, nameToken);
+        }
+
+        private static bool ContainsSpriteName(Sprite sprite, string nameToken)
+        {
+            return sprite != null &&
+                   !string.IsNullOrEmpty(sprite.name) &&
+                   sprite.name.Contains(nameToken);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace _Code.Manager
         private const string StageFailedTitle = "\uAC8C\uC784\uC624\uBC84 \uD558\uC168\uC2B5\uB2C8\uB2E4";
         private const string ScoreLabel = "\uC810\uC218";
         private const string BestScoreLabel = "\uCD5C\uACE0\uC810\uC218";
-        private const string RetryButtonLabel = "\uB2E4\uC2DC\uD558\uAE30";
+        private const string RetryButtonLabel = "";
         private const string NextButtonLabel = "\uB2E4\uC74C";
         private const string StageExitButtonLabel = "\uB098\uAC00\uAE30";
 

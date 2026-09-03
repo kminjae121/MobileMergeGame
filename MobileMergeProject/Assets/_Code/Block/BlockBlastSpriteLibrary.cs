@@ -38,7 +38,7 @@ namespace _Code.Block
         private static Sprite _catTowerFrameSprite;
         private static Sprite _mouseHoleFrameSprite;
 
-        public static Sprite CatBlockSprite => CatBlockSprites.Length > 0 ? CatBlockSprites[0] : LoadSprite(CatBlockSpritePath, ref _catBlockSprite);
+        public static Sprite CatBlockSprite => LoadSprite(CatBlockSpritePath, ref _catBlockSprite) ?? GetFirstCatBlockSprite();
         public static Sprite CheeseBlockSprite => LoadSprite(CheeseBlockSpritePath, ref _cheeseBlockSprite) ?? CatBlockSprite;
         public static Sprite[] CatBlockSprites => GetCatBlockSprites();
         public static Sprite MouseSprite => LoadSprite(MouseSpritePath, ref _mouseSprite);
@@ -79,7 +79,8 @@ namespace _Code.Block
             {
                 LoadSprite(BlackCatBlockSpritePath, ref _blackCatBlockSprite),
                 LoadSprite(WhiteCatBlockSpritePath, ref _whiteCatBlockSprite),
-                LoadSprite(SphynxCatBlockSpritePath, ref _sphynxCatBlockSprite)
+                LoadSprite(SphynxCatBlockSpritePath, ref _sphynxCatBlockSprite),
+                LoadSprite(CatBlockSpritePath, ref _catBlockSprite)
             };
 
             sprites.RemoveAll(sprite => sprite == null);
@@ -94,6 +95,12 @@ namespace _Code.Block
 
             _catBlockSprites = sprites.ToArray();
             return _catBlockSprites;
+        }
+
+        private static Sprite GetFirstCatBlockSprite()
+        {
+            Sprite[] sprites = CatBlockSprites;
+            return sprites.Length > 0 ? sprites[0] : null;
         }
 
         private static Sprite LoadSprite(string path, ref Sprite sprite)

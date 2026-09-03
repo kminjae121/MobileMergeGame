@@ -57,11 +57,13 @@ namespace _Code.Manager
             Vector2Int direction,
             ICollection<Vector3> clearedWorldPositions,
             ICollection<Vector2Int> clearedPoints,
+            ICollection<Sprite> clearedSprites,
             out BoardShiftResult result)
         {
             result = default;
             clearedWorldPositions?.Clear();
             clearedPoints?.Clear();
+            clearedSprites?.Clear();
 
             if (blockField == null || randomBlockManager == null)
                 return false;
@@ -70,7 +72,7 @@ namespace _Code.Manager
                 return false;
 
             bool moved = blockField.Compact(direction);
-            int clearedLines = blockField.ClearCompletedLines(clearedWorldPositions, clearedPoints);
+            int clearedLines = blockField.ClearCompletedLines(clearedWorldPositions, clearedPoints, clearedSprites);
             bool hasAnyRemainingPlacement = randomBlockManager.HasAnyAvailablePlacement(blockField);
             result = new BoardShiftResult(moved, clearedLines, hasAnyRemainingPlacement);
             

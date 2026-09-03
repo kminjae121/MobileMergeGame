@@ -10,13 +10,13 @@ namespace _Code.Stage
         {
             ScoreStage(1, 1000),
             CheeseStage(2, 13, Cells(2, 2, 3, 3)),
-            ScoreStage(3, 2000),
+            CatRemovalStage(3, StageTargetCatType.Black, 6),
             CheeseStage(4, 17, Cells(1, 1, 4, 1, 1, 4, 4, 4)),
-            ScoreStage(5, 5000),
+            CatRemovalStage(5, StageTargetCatType.White, 10),
             CheeseStage(6, 21, Cells(1, 0, 4, 0, 2, 2, 3, 2, 1, 5, 4, 5)),
             ScoreStage(7, 7000),
             ScoreStage(8, 8000),
-            ScoreStage(9, 10000),
+            CatRemovalStage(9, StageTargetCatType.Orange, 15),
             CheeseStage(10, 25, Cells(0, 0, 2, 0, 5, 0, 1, 2, 4, 2, 0, 5, 3, 5, 5, 5))
         };
 
@@ -60,6 +60,11 @@ namespace _Code.Stage
         private static StageDefinition CheeseStage(int number, int maxPlacementCount, Vector2Int[] cheeseCells)
         {
             return new StageDefinition(number, StageGoalType.Cheese, 0, Cells(), cheeseCells, maxPlacementCount);
+        }
+
+        private static StageDefinition CatRemovalStage(int number, StageTargetCatType targetCatType, int targetCount)
+        {
+            return new StageDefinition(number, StageGoalType.CatRemoval, 0, Cells(), Cells(), 0, targetCatType, targetCount);
         }
 
         private static Vector2Int[] Cells(params int[] coordinates)
